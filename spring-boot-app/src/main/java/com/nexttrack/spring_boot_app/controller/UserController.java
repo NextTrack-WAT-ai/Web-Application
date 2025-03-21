@@ -17,7 +17,7 @@ public class UserController {
     // @Autowired
     // private UserRepo userRepo; // establishes connection to user database 
 
-    @PostMapping("/register")
+    @PostMapping("user/register")
     public ResponseEntity<String> register(@RequestParam String username, @RequestParam String password) {
         return userService.RegisterUser(username, password); 
     }
