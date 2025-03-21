@@ -56,4 +56,37 @@ mvn spring-boot:run
 
 The backend should now be running at http://localhost:8080.
 
-## More documentation on DB setup coming soon, but we will be using mongoDB!
+## MongoDB setup
+Ensure that you have [MongoDB installed](https://www.mongodb.com/docs/mongodb-shell/install/).
+
+Also ensure that the mongoDB service is running as outlined in the docs above. 
+
+Navigate to the application.properties file on the backend 
+```sh
+cd ../spring-boot-app/src/main/resources/application.properties
+```
+
+Ensure that your application.properties file looks like the following:
+```properties
+spring.application.name=spring-boot-app
+spring.data.mongodb.host=localhost
+spring.data.mongodb.port=27017
+spring.data.mongodb.database=nexttrack
+```
+
+Start mongoDB locally
+```sh
+mongosh
+```
+
+Create the nexttrack db
+```sh
+use nexttrack
+```
+
+Navigate to the nexttrack db
+```sh
+db nexttrack
+```
+
+You should now have mongoDB set up!

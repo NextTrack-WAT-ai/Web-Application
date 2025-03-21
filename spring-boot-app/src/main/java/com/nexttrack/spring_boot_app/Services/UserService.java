@@ -16,14 +16,11 @@ public class UserService {
 
     public ResponseEntity<String> RegisterUser(String username, String password) {
         Optional<User> foundUser = userRepo.findByUsername(username); 
-        if (!foundUser.isEmpty()) { // make sure that usernames are unique before registration
+        if (!foundUser.isEmpty()) { 
             return new ResponseEntity<>("User with this username already exists!", HttpStatus.BAD_REQUEST); 
         }
-        // Integer id = 1; // unncessary, mongo generates object ids automatically 
-        User newUser = new User(/*id, */ username, password); // we create a new user with the user model 
-        userRepo.save(newUser); // save to db 
-
-        // OPTIONAL consider adding error handling for internal server errors?
+        User newUser = new User(username, password);
+        userRepo.save(newUser); // save to repository
 
         return new ResponseEntity<>("User registered succesfully!", HttpStatus.CREATED); 
     }
