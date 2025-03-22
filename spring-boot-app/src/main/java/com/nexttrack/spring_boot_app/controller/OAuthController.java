@@ -16,9 +16,12 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.model_objects.specification.Artist;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
+import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
+import se.michaelthelin.spotify.model_objects.specification.TrackSimplified;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
 import se.michaelthelin.spotify.requests.data.personalization.simplified.GetUsersTopArtistsRequest;
+import se.michaelthelin.spotify.requests.data.playlists.GetListOfCurrentUsersPlaylistsRequest;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -102,6 +105,29 @@ public class OAuthController {
             System.out.println("Error: " + exception);
         }
         return new Artist[0]; 
+    }
+    
+    // SHOULD get all user playlists 
+    @GetMapping("all-user-playlists")
+    public PlaylistSimplified[] getAllPlaylists() {
+        final GetListOfCurrentUsersPlaylistsRequest getListOfUsersPlaylistsRequest = spotifyApi.getListOfCurrentUsersPlaylists()
+            .build(); 
+        
+        try {
+            final Paging<PlaylistSimplified> playlistsPaging = getListOfUsersPlaylistsRequest.execute(); 
+            return playlistsPaging.getItems(); 
+        } catch (Exception exception) {
+            System.out.println("Error: " + exception);
+        }
+        return new PlaylistSimplified[0]; 
+    }
+    
+    // more docs: https://spotify-web-api-java.github.io/spotify-web-api-java/apidocs/se/michaelthelin/spotify/model_objects/specification/Track.html
+    // i am beginning to lose my sanity
+    @GetMapping("all-songs-from-playlist")
+    public TrackSimplified[] getSongsFromPlaylist() {
+        
+        return new TrackSimplified[0]; 
     }
     
 }
