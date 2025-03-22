@@ -1,4 +1,5 @@
 package com.nexttrack.spring_boot_app.controller;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,25 +13,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 
-@RestController
+@RestController("/user")
 public class UserController {
     @Autowired
     public UserService userService; 
 
-    // @Autowired
-    // private UserRepo userRepo; // establishes connection to user database 
-
-    @PostMapping("user/register")
+    @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody User newUser) {
         return userService.RegisterUser(newUser); 
     }
     
-    @GetMapping("user/login")
+    @GetMapping("/login") // consider deprecating, but otherwise TODO add JWTs to this route
     public ResponseEntity<String> login(@RequestBody User attemptUser) {
         return userService.LoginUser(attemptUser); 
     }
     
-    @DeleteMapping("user/logout") // delete method since we remove the JWT resource 
+    @DeleteMapping("/logout") // delete method since we remove the JWT resource 
     public ResponseEntity<String> logout() {
         return userService.LogoutUser(); 
     }
