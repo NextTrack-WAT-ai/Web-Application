@@ -42,7 +42,6 @@ public class OAuthController {
         return randomStr.substring(0, length);
     }
 
-    String CLIENT_ID = "CLIENT_ID"; 
     private static final URI redirect_uri = SpotifyHttpManager.makeUri("http://localhost:8080/api/get-user-code");// we get this from the spotify login dashboard 
     private String code = ""; 
 
@@ -54,7 +53,7 @@ public class OAuthController {
 
     @GetMapping("login")
     @ResponseBody // allows us to send data as JSON or XML directly in the response of the endpoint 
-    public String spotifyLogin(@RequestParam String param) {
+    public String spotifyLogin() {
         AuthorizationCodeUriRequest authCodeUriRequest = spotifyApi.authorizationCodeUri()
             .scope("user-read-private, user-read-email, user-top-read, playlist-read-private, playlist-read-collaborative, playlist-modify-private, playlist-modify-public") 
             //above outlines the data we retrieve from the user's spotify account
@@ -73,7 +72,7 @@ public class OAuthController {
 
         try {
             final AuthorizationCodeCredentials authCodeCredentials = authCodeRequest.execute(); 
-
+ 
             // we extract the tokens themselves, I think.
             spotifyApi.setAccessToken(authCodeCredentials.getAccessToken());
             spotifyApi.setRefreshToken(authCodeCredentials.getRefreshToken());
