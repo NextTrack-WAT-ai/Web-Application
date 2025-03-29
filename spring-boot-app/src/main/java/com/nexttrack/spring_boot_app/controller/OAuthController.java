@@ -83,7 +83,7 @@ public class OAuthController {
         }
 
         // we redirect the user to the landing page 
-        response.sendRedirect("http://localhost:3000/wherever-we-want-to-go-next"); // this is a placeholder for a url on the frontend
+        response.sendRedirect("http://localhost:5173/landing/"); // this is a placeholder for a url on the frontend
         return spotifyApi.getAccessToken(); // we return the token 
     }
     
