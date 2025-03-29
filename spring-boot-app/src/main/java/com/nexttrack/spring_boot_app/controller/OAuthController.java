@@ -87,7 +87,6 @@ public class OAuthController {
         return spotifyApi.getAccessToken(); // we return the token 
     }
     
-    // this takes code abstraction to a new level...
     @GetMapping("user-top-artists")
     public Artist[] getUserTopArtists() { // artist is apparently a unique object
         // THIS IS A SPECIFIC REQUEST????
