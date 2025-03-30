@@ -16,7 +16,7 @@ Make sure you have the following installed before proceeding:
 To clone the repository, open a terminal and run:
 
 ```sh
-git clone https://github.com/your-username/your-repo.git
+git clone https://github.com/NextTrack-WAT-ai/Web-Application.git
 cd your-repo
 ```
 
