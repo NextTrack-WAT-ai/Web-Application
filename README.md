@@ -2,13 +2,13 @@
 
 ## Overview
 This project consists of two main components:
-1. **Frontend**: Built with [Next.js](https://nextjs.org/)
+1. **Frontend**: Built with [Vite](https://vite.dev/)
 2. **Backend**: Built with [Spring Boot](https://spring.io/projects/spring-boot)
 
 ## Prerequisites
 Make sure you have the following installed before proceeding:
 - **Git**: [Download and install](https://git-scm.com/)
-- **Node.js** (for Next.js frontend): [Download and install](https://nodejs.org/)
+- **Node.js** (for vite frontend): [Download and install](https://vite.dev/)
 - **Java 23+** (for Spring Boot backend): [Download and install](https://adoptopenjdk.net/)
 - **Maven** (for building the backend): [Download and install](https://maven.apache.org/)
 
@@ -36,7 +36,7 @@ Run development build
 npm run dev 
 ```
 
-The next.js app should now be running on http://localhost:3000.
+The Vite app should now be running on http://localhost:5173.
 
 ## Setting up the backend
 Navigate to root backend directory
