@@ -8,11 +8,12 @@ import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCrede
 import se.michaelthelin.spotify.model_objects.specification.Artist;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
-import se.michaelthelin.spotify.model_objects.specification.TrackSimplified;
+import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
 import se.michaelthelin.spotify.requests.data.personalization.simplified.GetUsersTopArtistsRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfCurrentUsersPlaylistsRequest;
+import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistsItemsRequest;
 
 import org.springframework.stereotype.Service;
 
@@ -28,18 +29,18 @@ public class SpotifyService {
 
     public SpotifyService() {
         this.spotifyApi = new SpotifyApi.Builder()
-                .setClientId(clientId)
-                .setClientSecret(clientSecret)
-                .setRedirectUri(redirectUri)
-                .build();
+            .setClientId(clientId)
+            .setClientSecret(clientSecret)
+            .setRedirectUri(redirectUri)
+            .build();
     }
 
     // Generate the Spotify login URL
     public String getSpotifyLoginUrl() {
         AuthorizationCodeUriRequest authCodeUriRequest = spotifyApi.authorizationCodeUri()
-                .scope("user-read-private, user-read-email, user-top-read, playlist-read-private, playlist-read-collaborative, playlist-modify-private, playlist-modify-public")
-                .show_dialog(true)
-                .build();
+            .scope("user-read-private, user-read-email, user-top-read, playlist-read-private, playlist-read-collaborative, playlist-modify-private, playlist-modify-public")
+            .show_dialog(true)
+            .build();
 
         URI uri = authCodeUriRequest.execute();
         return uri.toString();
@@ -91,8 +92,16 @@ public class SpotifyService {
         return new PlaylistSimplified[0]; 
     }
         
-    public TrackSimplified[] getSongsFromPlaylist() {
-        
-        return new TrackSimplified[0]; 
+    public PlaylistTrack[] getSongsFromPlaylist(String playlistId) {
+        final GetPlaylistsItemsRequest getPlaylistItemsRequest = spotifyApi.getPlaylistsItems(playlistId)
+            .build(); 
+
+        try {
+            final Paging<PlaylistTrack> tracksPaging = getPlaylistItemsRequest.execute(); 
+            return tracksPaging.getItems(); 
+        } catch (Exception exception) {
+            System.out.println("Error: " + exception);
+        }
+        return new PlaylistTrack[0]; 
     }    
 }
