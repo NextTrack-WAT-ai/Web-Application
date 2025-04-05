@@ -17,7 +17,7 @@ public class ReshuffleService {
 
     public ReshuffleService() {
         this.webClient = WebClient.builder()
-                .baseUrl("http://algorithm")
+                .baseUrl("https://recommendation-model-q48y.onrender.com")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
@@ -25,7 +25,7 @@ public class ReshuffleService {
     public ReshuffleResponse reshuffle(List<String> trackIds) {
         try {
             return webClient.post()
-                    .uri("/predict")
+                    .uri("/shuffle")
                     .bodyValue(trackIds)
                     .retrieve()
                     .bodyToMono(ReshuffleResponse.class)
