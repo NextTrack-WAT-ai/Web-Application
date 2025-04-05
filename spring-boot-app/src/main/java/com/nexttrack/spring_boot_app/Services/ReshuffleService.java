@@ -1,35 +1,36 @@
 package com.nexttrack.spring_boot_app.Services;
 
-import java.util.List;
 
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import com.nexttrack.spring_boot_app.model.ReshuffleResponse;
 
+import java.util.List;
+
+@Service
 public class ReshuffleService {
-    private final RestTemplate restTemplate;
-    private final String apiUrl = "http://algorithm/predict";
+
+    private final WebClient webClient;
 
     public ReshuffleService() {
-        this.restTemplate = new RestTemplate();
+        this.webClient = WebClient.builder()
+                .baseUrl("http://algorithm")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
     }
 
     public ReshuffleResponse reshuffle(List<String> trackIds) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Content-Type", "application/json");
-        
-        HttpEntity<List<String>> entity = new HttpEntity<>(trackIds, headers);
-
         try {
-            ResponseEntity<ReshuffleResponse> response = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, ReshuffleResponse.class);
-
-            return response.getBody(); 
-        } catch (HttpClientErrorException e) {
+            return webClient.post()
+                    .uri("/predict")
+                    .bodyValue(trackIds)
+                    .retrieve()
+                    .bodyToMono(ReshuffleResponse.class)
+                    .block();
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }

@@ -23,9 +23,9 @@ public class PlaylistController {
     private SpotifyService spotifyService;
         private ReshuffleService reshuffleService;
         
-            public PlaylistController(SpotifyService spotifyService, ReshuffleService reshuffleService){
-                this.spotifyService = spotifyService;
-                this.reshuffleService = reshuffleService;
+        public PlaylistController(SpotifyService spotifyService, ReshuffleService reshuffleService){
+            this.spotifyService = spotifyService;
+            this.reshuffleService = reshuffleService;
         }
             
     @GetMapping("playlists/all")
