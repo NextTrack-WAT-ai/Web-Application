@@ -4,8 +4,10 @@ import {useState, useEffect} from 'react';
 export default function Landing() {
     const [playlistId, setPlaylistId] = useState(""); 
     const [playlist, setPlaylist] = useState<any[]>([]); 
+    const [shuffled, setShuffled] = useState<any[]>([]); // array to store the shuffled playlist
     const [playlists, setPlaylists] = useState<any[]>([]); 
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [loading, setLoading] = useState(true); 
     
     const Stepper = () => {
         const handleBack = () => {
@@ -56,7 +58,9 @@ export default function Landing() {
                     // TODO add in api call to AI shuffle endpoint
                 }}>Shuffle With NextTrack</button>
             </div>,
-            <div>Section 3: Content for the third section</div>
+            <div>
+                <button>Export To Spotify</button>
+            </div>
         ]; // List of sections to display
     
         return (
@@ -64,7 +68,7 @@ export default function Landing() {
                 {sections[currentIndex]} {/* Display the current section */}
                 <div>
                     <button onClick={handleBack} disabled={currentIndex === 0}>
-                        Back
+                        back
                     </button>
                 </div>
             </div>
@@ -72,17 +76,28 @@ export default function Landing() {
     };
 
     const getUserPlaylists = async () => {
+        setLoading(true); 
         const response = await fetch("http://localhost:8080/api/playlists/all"); 
         const text = await response.text(); 
-        setPlaylists(JSON.parse(text)); 
+        setPlaylists(JSON.parse(text));
+        setLoading(false);  
     }
 
     const getPlaylist = async (playListId:string) => {
+        setLoading(true); 
         const response = await fetch(`http://localhost:8080/api/playlist?id=${playListId}`, {
             method : "GET", 
-        });0
+        });
         const text = await response.text(); 
         setPlaylist(JSON.parse(text)); 
+        setLoading(false); 
+    }
+
+    const getShuffledPlaylist = async (playlistId:string) => {
+        setLoading(true); 
+        const response = await fetch(`http://localhost:8080/api/playlist/reshuffle?id=${playlistId}`); 
+        const text = await response.text(); 
+        setLoading(false); 
     }
 
     useEffect(() => {
@@ -95,7 +110,7 @@ export default function Landing() {
 
     return (
         <div>
-            <Stepper />
+            {loading ? <h2>Loading...</h2> : <Stepper />}
         </div>
     )
 }
