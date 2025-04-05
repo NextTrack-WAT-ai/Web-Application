@@ -6,6 +6,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexttrack.spring_boot_app.model.ReshuffleRequest;
 import com.nexttrack.spring_boot_app.model.ReshuffleResponse;
 
 import java.util.List;
@@ -24,9 +26,11 @@ public class ReshuffleService {
 
     public ReshuffleResponse reshuffle(List<String> trackIds) {
         try {
+            var payload = new ReshuffleRequest(trackIds);
+            System.out.println("Sending payload: " + new ObjectMapper().writeValueAsString(payload));
             return webClient.post()
                     .uri("/shuffle")
-                    .bodyValue(trackIds)
+                    .bodyValue(payload)
                     .retrieve()
                     .bodyToMono(ReshuffleResponse.class)
                     .block();

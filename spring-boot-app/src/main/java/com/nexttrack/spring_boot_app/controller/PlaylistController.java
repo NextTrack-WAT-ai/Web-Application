@@ -8,6 +8,7 @@ import com.nexttrack.spring_boot_app.Services.ReshuffleService;
 import com.nexttrack.spring_boot_app.Services.SpotifyService;
 
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
+import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.TrackSimplified;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +38,11 @@ public class PlaylistController {
 
     @GetMapping("playlist/reshuffle")
     public List<String> reshuffle(@RequestParam("id") String playlistId) {        
-        var songs = spotifyService.getSongsFromPlaylist();
+        var playlistTracks = spotifyService.getSongsFromPlaylist(playlistId);
         var songIds = new ArrayList<String>();
 
-        for (TrackSimplified song : songs) {
-            songIds.add(song.getId());
+        for (PlaylistTrack track : playlistTracks) {            
+            songIds.add(track.getTrack().getId());
         }
 
         var reshuffledSongsResult = reshuffleService.reshuffle(songIds);
