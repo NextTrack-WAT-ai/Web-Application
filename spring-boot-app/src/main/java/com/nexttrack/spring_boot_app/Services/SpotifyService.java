@@ -1,20 +1,27 @@
 package com.nexttrack.spring_boot_app.Services;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
+
 import com.nexttrack.spring_boot_app.Keys;
 
 import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.model_objects.specification.Artist;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
+import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
 import se.michaelthelin.spotify.requests.data.personalization.simplified.GetUsersTopArtistsRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfCurrentUsersPlaylistsRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistsItemsRequest;
 
+import org.apache.hc.core5.http.ParseException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -104,4 +111,10 @@ public class SpotifyService {
         }
         return new PlaylistTrack[0]; 
     }    
+
+    public List<Track> getSeveralTracks(List<String> trackIds)
+        throws IOException, SpotifyWebApiException, ParseException {
+    String[] idsArray = trackIds.toArray(new String[0]);
+    return Arrays.asList(spotifyApi.getSeveralTracks(idsArray).build().execute());
+}
 }
