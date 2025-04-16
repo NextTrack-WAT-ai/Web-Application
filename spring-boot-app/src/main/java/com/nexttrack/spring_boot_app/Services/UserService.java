@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.nexttrack.spring_boot_app.model.User;
+import com.nexttrack.spring_boot_app.model.NextTrackUser;
 import com.nexttrack.spring_boot_app.repository.UserRepo;
 
 @Service
@@ -17,8 +17,8 @@ public class UserService {
 
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12); // we construct Bcrypt object with strength of 12
 
-    public ResponseEntity<String> RegisterUser(User newUser) {
-        Optional<User> foundUser = userRepo.findByUsername(newUser.getUsername()); 
+    public ResponseEntity<String> RegisterUser(NextTrackUser newUser) {
+        Optional<NextTrackUser> foundUser = userRepo.findByUsername(newUser.getUsername()); 
         if (!foundUser.isEmpty()) { 
             return new ResponseEntity<>("User with this username already exists!", HttpStatus.BAD_REQUEST); 
         }
@@ -33,8 +33,8 @@ public class UserService {
         return new ResponseEntity<>("User registered succesfully!", HttpStatus.CREATED); 
     }
 
-    public ResponseEntity<String> LoginUser(User attemptUser) {
-        Optional<User> foundUser = userRepo.findByUsername(attemptUser.getUsername()); 
+    public ResponseEntity<String> LoginUser(NextTrackUser attemptUser) {
+        Optional<NextTrackUser> foundUser = userRepo.findByUsername(attemptUser.getUsername()); 
         if (foundUser.isEmpty()) {
             return new ResponseEntity<>("No user with this username exists", HttpStatus.BAD_REQUEST); 
         }
