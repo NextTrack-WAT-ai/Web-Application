@@ -90,15 +90,15 @@ body {
 }
 
 .playlist-grid {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   height: 70vh;
-  grid-template-columns: repeat(auto-fill);
-  gap: 16px;
   padding: 16px;
   background-color: #1e1e1e; /* dark grey background */
   margin: 0 auto;
   width: 50%;
+  gap: 1rem;
 }
 
 .playlist-item {
