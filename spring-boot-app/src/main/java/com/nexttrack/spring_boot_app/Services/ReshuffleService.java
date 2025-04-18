@@ -24,6 +24,7 @@ public class ReshuffleService {
                 .build();
     }
 
+    // TODO add send artist name and song title as parameters
     public ReshuffleResponse reshuffle(List<String> trackIds) {
         try {
             var payload = new ReshuffleRequest(trackIds);
