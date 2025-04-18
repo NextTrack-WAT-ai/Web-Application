@@ -2,12 +2,12 @@ package com.nexttrack.spring_boot_app.model;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document // mongo stuff
-public class User {
+public class NextTrackUser {
     private String username; 
     private String password; 
     
     // simple constructor, consider adding an empty constructor?
-    public User(String username, String password) {
+    public NextTrackUser(String username, String password) {
         this.username = username; 
         this.password = password; 
     }

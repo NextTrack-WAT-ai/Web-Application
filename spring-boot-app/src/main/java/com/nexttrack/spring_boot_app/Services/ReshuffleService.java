@@ -1,6 +1,5 @@
 package com.nexttrack.spring_boot_app.Services;
 
-
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -8,6 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexttrack.spring_boot_app.model.NextTrack;
+
+import se.michaelthelin.spotify.model_objects.specification.Track;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +28,7 @@ public class ReshuffleService {
                 .build();
     }
 
-    public List<Map<String, String>> reshuffle(HashMap<String, String> songInfoMap) {
+    public List<Map<String, String>> reshuffle(Map<String, NextTrack> songInfoMap) {
         try {
             List<Map<String, String>> songDetailsList = new ArrayList<>();
 
@@ -50,7 +52,8 @@ public class ReshuffleService {
                     .uri("/shuffle")
                     .bodyValue(songDetailsList)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, String>>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, String>>>() {
+                    })
                     .block();
         } catch (Exception e) {
             e.printStackTrace();
