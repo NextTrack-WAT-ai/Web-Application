@@ -115,13 +115,16 @@ export default function Landing() {
     </div>
   );
 
+  // if your ide throws an error here, please pay it no attention, this works just fine
   const UserFooter = () => (
     <div className="user-footer">
-      <div className="user-avatar"></div>
+      <div className="user-avatar">
+        <img className="user-avatar" src={userProfile?.images[0]?.url} alt="profile" /> 
+      </div>
       Logged in: {userProfile?.displayName}
     </div>
   );
-
+  
   const PlaylistSelectionView = () => (
     <div className="page playlist-selection">
       <Logo />

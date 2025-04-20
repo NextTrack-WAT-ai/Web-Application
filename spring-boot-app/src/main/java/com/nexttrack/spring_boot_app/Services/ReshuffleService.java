@@ -9,8 +9,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexttrack.spring_boot_app.model.NextTrack;
 
-import se.michaelthelin.spotify.model_objects.specification.Track;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
