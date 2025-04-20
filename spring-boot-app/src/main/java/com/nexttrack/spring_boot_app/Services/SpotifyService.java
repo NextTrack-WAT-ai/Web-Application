@@ -3,12 +3,7 @@ package com.nexttrack.spring_boot_app.Services;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 import com.nexttrack.spring_boot_app.Keys;
 import com.nexttrack.spring_boot_app.model.CreatePlaylistResult;
@@ -16,7 +11,6 @@ import com.nexttrack.spring_boot_app.model.CreatePlaylistResult;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
-import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
 import se.michaelthelin.spotify.model_objects.specification.Artist;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
@@ -36,7 +30,6 @@ import se.michaelthelin.spotify.requests.data.users_profile.GetUsersProfileReque
 
 import org.apache.hc.core5.http.ParseException;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.util.Tuple;
 
 @Service
 public class SpotifyService {
@@ -114,6 +107,20 @@ public class SpotifyService {
         return new PlaylistSimplified[0];
     }
 
+    public PlaylistSimplified[] getRemixes(List<String> remixes) {
+        final GetListOfCurrentUsersPlaylistsRequest getListOfUsersPlaylistsRequest = spotifyApi
+                .getListOfCurrentUsersPlaylists()
+                .build();
+
+        try {
+            final Paging<PlaylistSimplified> playlistsPaging = getListOfUsersPlaylistsRequest.execute();
+            return playlistsPaging.getItems();
+        } catch (Exception exception) {
+            System.out.println("Error: " + exception);
+        }
+        return new PlaylistSimplified[0];
+    }
+
     public PlaylistTrack[] getSongsFromPlaylist(String playlistId) {
         final GetPlaylistsItemsRequest getPlaylistItemsRequest = spotifyApi.getPlaylistsItems(playlistId)
                 .build();
@@ -147,6 +154,19 @@ public class SpotifyService {
         }
 
         return null;
+    }
+
+    public String getCurrentUsersEmail() {
+        try {
+            GetCurrentUsersProfileRequest getCurrentUsersProfileRequest = spotifyApi
+                    .getCurrentUsersProfile()
+                    .build(); 
+            User user = getCurrentUsersProfileRequest.execute(); 
+            return user.getEmail(); 
+        } catch (IOException | SpotifyWebApiException | ParseException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        return null; 
     }
 
     public User getUsersProfile_Sync() {
