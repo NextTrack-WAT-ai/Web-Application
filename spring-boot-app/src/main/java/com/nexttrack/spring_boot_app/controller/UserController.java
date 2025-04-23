@@ -12,7 +12,9 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -33,13 +35,19 @@ public class UserController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<String> createUser(String email) {
+    public ResponseEntity<String> createUser(@RequestParam String email) {
         return userService.AddUser(email);
     }
 
     @GetMapping("/remixes")
     public List<String> getAllRemixes(@RequestParam String email) {
         return userService.GetRemixes(email); 
+    }
+
+    @CrossOrigin(origins = "http://localhost:5173") // for some reason we need to add this explicitly
+    @PatchMapping("/remixes/add")
+    public ResponseEntity<String> addRemix(@RequestParam String email, @RequestParam String playlistid) {
+        return userService.AddRemix(email, playlistid); 
     }
 
     @GetMapping("/profile")
