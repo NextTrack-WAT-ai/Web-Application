@@ -7,9 +7,9 @@ import org.springframework.data.mongodb.repository.Query;
 
 import com.nexttrack.spring_boot_app.model.NextTrackUser;
 
+public interface UserRepo extends MongoRepository<NextTrackUser, String> {
+    @Query("{ email : '?0' }")
+    Optional<NextTrackUser> findByEmail(String email); 
 
-public interface UserRepo extends MongoRepository<NextTrackUser, Integer> { // just initializes the format of the mongo db
-    // custom queries go here 
-    @Query("{ 'username' : ?0 }") // custom method to get user based on unique username
-    Optional<NextTrackUser> findByUsername(String username); 
+    
 }

@@ -1,10 +1,16 @@
 package com.nexttrack.spring_boot_app.Services;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.nexttrack.spring_boot_app.model.NextTrackUser;
@@ -13,44 +19,45 @@ import com.nexttrack.spring_boot_app.repository.UserRepo;
 @Service
 public class UserService {
     @Autowired
-    private UserRepo userRepo; // connects to user db repo
+    private UserRepo userRepo; 
 
-    private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12); // we construct Bcrypt object with strength of 12
+    public Boolean UserExists(String email) {
+        return userRepo.findByEmail(email).isPresent();
+    }
 
-    public ResponseEntity<String> RegisterUser(NextTrackUser newUser) {
-        Optional<NextTrackUser> foundUser = userRepo.findByUsername(newUser.getUsername()); 
-        if (!foundUser.isEmpty()) { 
-            return new ResponseEntity<>("User with this username already exists!", HttpStatus.BAD_REQUEST); 
+    public ResponseEntity<String> AddUser(String email) {
+        if (UserExists(email)) {
+            return new ResponseEntity<>("User already exists", HttpStatus.CONFLICT); 
         }
+        List<String> emptyRemixes = new ArrayList<String>() {};
+        final NextTrackUser newUser = new NextTrackUser(email, emptyRemixes);
+        userRepo.save(newUser);
+        return new ResponseEntity<>("User created succesfully", HttpStatus.CREATED); 
+    }
 
-        // TODO add password length and strength testing here
+    public List<String> GetRemixes(String email) { // ensure that we call this after AddUser is finished
+        Optional<NextTrackUser> User = userRepo.findByEmail(email);
+        if (!User.isPresent()) {
+            return new ArrayList<String>(); // we return an empty list, just better error handling
+        } else {
+            return User.get().getRemixes(); 
+        }
+    }
 
-        // we first hash the password using bcrypt
-        newUser.setPassword(encoder.encode(newUser.getPassword()));
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    public ResponseEntity<String> AddRemix(String email, String playlistId) {
+        Optional<NextTrackUser> user = userRepo.findByEmail(email); 
+        if (!user.isPresent()) {
+            return new ResponseEntity<>("No user with this email exists", HttpStatus.BAD_REQUEST);
+        }
+        Query query = new Query(Criteria.where("email").is(email));
+
+        Update update = new Update().addToSet("remixes", playlistId);
+
+        mongoTemplate.updateFirst(query, update, NextTrackUser.class);
         
-        userRepo.save(newUser); // save to repository
-
-        return new ResponseEntity<>("User registered succesfully!", HttpStatus.CREATED); 
-    }
-
-    public ResponseEntity<String> LoginUser(NextTrackUser attemptUser) {
-        Optional<NextTrackUser> foundUser = userRepo.findByUsername(attemptUser.getUsername()); 
-        if (foundUser.isEmpty()) {
-            return new ResponseEntity<>("No user with this username exists", HttpStatus.BAD_REQUEST); 
-        }
-
-        String hashed_attempt = encoder.encode(attemptUser.getPassword()); 
-        if (!hashed_attempt.equals(foundUser.get().getPassword())) {
-            return new ResponseEntity<>("Wrong username or password", HttpStatus.BAD_REQUEST); 
-        }
-
-        // TODO give the user a JWT for API route validation >W<
-
-        return new ResponseEntity<>("Logged in succesfully!", HttpStatus.ACCEPTED); // consider using HtppStatus.CREATED 
-    }
-
-    public ResponseEntity<String> LogoutUser() { // user JWT should be passed through request headers
-        // TODO remove JWT from user 
-        return new ResponseEntity<>("Logged out succesfully!", HttpStatus.OK); 
+        return new ResponseEntity<>("Playlist added to remixes", HttpStatus.OK); 
     }
 }

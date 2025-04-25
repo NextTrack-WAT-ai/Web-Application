@@ -1,49 +1,53 @@
 package com.nexttrack.spring_boot_app.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nexttrack.spring_boot_app.Services.SpotifyService;
 import com.nexttrack.spring_boot_app.Services.UserService;
-import com.nexttrack.spring_boot_app.model.NextTrackUser;
 
 import se.michaelthelin.spotify.model_objects.specification.User;
 
-// import com.nexttrack.spring_boot_app.repository.UserRepo; uncomment when user repo is needed
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
-
-    public UserService userService;
-    public SpotifyService spotifyService;
+    private UserService userService; 
+    private SpotifyService spotifyService; 
 
     public UserController(UserService userService, SpotifyService spotifyService) {
         this.userService = userService;
         this.spotifyService = spotifyService;
-
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody NextTrackUser newUser) {
-        return userService.RegisterUser(newUser);
+    @GetMapping("/email") // we call the endpoints in the order coded 
+    public String getEmail() {
+        return spotifyService.getCurrentUsersEmail(); 
     }
 
-    @GetMapping("/login") // consider deprecating, but otherwise TODO add JWTs to this route
-    public ResponseEntity<String> login(@RequestBody NextTrackUser attemptUser) {
-        return userService.LoginUser(attemptUser);
+    @PostMapping("/create")
+    public ResponseEntity<String> createUser(@RequestParam String email) {
+        return userService.AddUser(email);
     }
 
-    @DeleteMapping("/logout") // delete method since we remove the JWT resource
-    public ResponseEntity<String> logout() {
-        return userService.LogoutUser();
+    @GetMapping("/remixes")
+    public List<String> getAllRemixes(@RequestParam String email) {
+        return userService.GetRemixes(email); 
+    }
+
+    @CrossOrigin(origins = "http://localhost:5173") // for some reason we need to add this explicitly
+    @PatchMapping("/remixes/add")
+    public ResponseEntity<String> addRemix(@RequestParam String email, @RequestParam String playlistid) {
+        return userService.AddRemix(email, playlistid); 
     }
 
     @GetMapping("/profile")
@@ -56,5 +60,4 @@ public class UserController {
 
         return ResponseEntity.ok(user);
     }
-
 }

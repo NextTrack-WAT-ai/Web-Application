@@ -19,15 +19,34 @@ export default function Landing() {
   const [step, setStep] = useState("select"); // "select", "detail", "remixed"
   const navigate = useNavigate();
 
+  const [email, setEmail] = useState(""); 
+
   useEffect(() => {
     getUserProfile();
     getUserPlaylists();
+    getUserEmail(); 
   }, []);
+
+  useEffect(() => {
+    if (email) {attemptRegister(email);}
+  }, [email])
 
   useEffect(() => {
     if (playlistId && step === "detail") getPlaylist(playlistId);
     if (playlistId && step === "remixed") getShuffledPlaylist(playlistTracks);
   }, [playlistId, step]);
+
+  const getUserEmail = async () => {
+    const res = await fetch("http://localhost:8080/user/email"); 
+    const text = await res.text(); 
+    setEmail(text);
+  }
+
+  const attemptRegister = async (email:string) => {
+    await fetch(`http://localhost:8080/user/create?email=${email}`, {
+      method : 'POST'
+    });
+  }
 
   const getUserProfile = async () => {
     const res = await fetch("http://localhost:8080/user/profile");
@@ -81,6 +100,12 @@ export default function Landing() {
     }
   };
 
+  const addRemixToAccount = async (email:string, playlistId:string) => {
+    await fetch(`http://localhost:8080/user/remixes/add?email=${email}&playlistid=${playlistId}`, {
+      method : "PATCH"
+    })
+  }
+
   const saveReshuffledPlaylist = async () => {
     const payload = {
       userId: userProfile?.id,
@@ -97,6 +122,14 @@ export default function Landing() {
     const data = await res.text();
     console.log(data);
     setShuffledPlaylistLink(data || "");
+
+    const match = data.match(/\/([^\/?#]+)(?:[?#]|$)/g);
+    const playlistId = match ? match[match.length - 1].replace(/\//g, '') : null;
+    if (!playlistId) {
+      console.error("Something went wrong, playlistId is null"); 
+    } else {
+      addRemixToAccount(email, playlistId); 
+    }
   };
 
   const handleReorder = (reorderedTracks: NextTrack[]) => {
@@ -116,7 +149,18 @@ export default function Landing() {
       >
         NextTrack
       </div>
-      <div className="header-right">My Remixes</div>
+      <div 
+      className="header-right"
+      onClick={() => {
+        navigate("/remixes", { // we pass these down to avoid redundant api calls
+          state: {
+            playlists : playlists, 
+            user : userProfile
+          }
+        }); 
+      }}>
+        My Remixes
+      </div>
     </div>
   );
 
@@ -126,13 +170,16 @@ export default function Landing() {
     </div>
   );
 
+  // if your ide throws an error here, please pay it no attention, this works just fine
   const UserFooter = () => (
     <div className="user-footer">
-      <div className="user-avatar"></div>
+      <div className="user-avatar">
+        <img className="user-avatar" src={userProfile?.images[0]?.url} alt="profile" /> 
+      </div>
       Logged in: {userProfile?.displayName}
     </div>
   );
-
+  
   const PlaylistSelectionView = () => (
     <div className="page playlist-selection">
       <Logo />
