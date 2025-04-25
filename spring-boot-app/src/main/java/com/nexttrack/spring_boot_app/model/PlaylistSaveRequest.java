@@ -5,6 +5,7 @@ import java.util.List;
 public class PlaylistSaveRequest {
     private String userId;
     private List<NextTrack> playlist;
+    private Boolean isLiked;
 
     // Getters and setters
     public String getUserId() {
@@ -21,5 +22,9 @@ public class PlaylistSaveRequest {
 
     public void setPlaylist(List<NextTrack> playlist) {
         this.playlist = playlist;
+    }
+
+    public boolean getIsLiked(){
+        return isLiked;
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexttrack.spring_boot_app.model.NextTrack;
+import com.nexttrack.spring_boot_app.model.PlaylistFeedback;
 
 import se.michaelthelin.spotify.model_objects.specification.Track;
 
@@ -32,20 +33,7 @@ public class ReshuffleService {
         try {
             List<Map<String, String>> songDetailsList = new ArrayList<>();
 
-            for (String key : songInfoMap.keySet()) {
-                String[] parts = key.split(" - ", 2); // split on first " - "
-
-                if (parts.length == 2) {
-                    String songName = parts[0];
-                    String artistName = parts[1];
-
-                    Map<String, String> songMap = new HashMap<>();
-                    songMap.put("name", songName);
-                    songMap.put("artist", artistName);
-
-                    songDetailsList.add(songMap);
-                }
-            }
+            extractSongDetailsList(songInfoMap, songDetailsList);
 
             System.out.println("Sending payload: " + new ObjectMapper().writeValueAsString(songDetailsList));
             return webClient.post()
@@ -58,6 +46,41 @@ public class ReshuffleService {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public List<Map<String, String>> saveReshuffleFeedback(List<PlaylistFeedback> feedbackTracks) {
+        try {
+
+            // TOOD: set correct feedback endpoint
+            System.out.println("Sending payload: " + new ObjectMapper().writeValueAsString(feedbackTracks));
+            return webClient.post()
+                    .uri("/feedback")
+                    .bodyValue(feedbackTracks)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, String>>>() {
+                    })
+                    .block();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void extractSongDetailsList(Map<String, NextTrack> songInfoMap, List<Map<String, String>> songDetailsList) {
+        for (String key : songInfoMap.keySet()) {
+            String[] parts = key.split(" - ", 2);
+
+            if (parts.length == 2) {
+                String songName = parts[0];
+                String artistName = parts[1];
+
+                Map<String, String> songMap = new HashMap<>();
+                songMap.put("name", songName);
+                songMap.put("artist", artistName);
+
+                songDetailsList.add(songMap);
+            }
         }
     }
 }

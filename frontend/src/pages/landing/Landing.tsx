@@ -11,7 +11,8 @@ export default function Landing() {
   const [userProfile, setUserProfile] = useState<UserProfile>();
   const [playlistTracks, setPlaylistTracks] = useState<NextTrack[]>([]);
   const [playlist, setPlaylist] = useState<SpotifyPlaylist>();
-  const [shuffled, setShuffled] = useState([]);
+  const [shuffled, setShuffled] = useState<NextTrack[]>([]);
+  const [isReordered, setIsReordered] = useState(false);
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [shuffledPlaylistLink, setShuffledPlaylistLink] = useState("");
   const [loading, setLoading] = useState(true);
@@ -68,7 +69,11 @@ export default function Landing() {
       }
 
       const data = await res.json();
-      setShuffled(data || []);
+      const indexedData = data.map((track: NextTrack, index: number) => ({
+        ...track,
+        trackIndex: index,
+      }));
+      setShuffled(indexedData);
     } catch (error) {
       console.error("Error reshuffling playlist:", error);
     } finally {
@@ -80,6 +85,7 @@ export default function Landing() {
     const payload = {
       userId: userProfile?.id,
       playlist: shuffled,
+      isLiked: !isReordered,
     };
 
     const res = await fetch("http://localhost:8080/api/playlist/save", {
@@ -91,6 +97,11 @@ export default function Landing() {
     const data = await res.text();
     console.log(data);
     setShuffledPlaylistLink(data || "");
+  };
+
+  const handleReorder = (reorderedTracks: NextTrack[]) => {
+    setShuffled(reorderedTracks);
+    setIsReordered(true);
   };
 
   // ------------------ COMPONENTS ------------------
@@ -178,8 +189,11 @@ export default function Landing() {
               <button onClick={() => setStep("remixed")}>Remix Playlist</button>
             </div>
           </div>
-
-          <SongTable tracks={playlistTracks} />
+          <SongTable
+            tracks={playlistTracks}
+            onReorder={handleReorder}
+            isDraggable={false}
+          />
         </>
       )}
     </div>
@@ -209,7 +223,11 @@ export default function Landing() {
             </div>
           </div>
 
-          <SongTable tracks={shuffled} />
+          <SongTable
+            tracks={shuffled}
+            onReorder={handleReorder}
+            isDraggable={true}
+          />
           {shuffledPlaylistLink && (
             <div
               className="view-playlist-button"
