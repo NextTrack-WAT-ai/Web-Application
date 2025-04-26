@@ -9,6 +9,7 @@ public class NextTrack {
     private String trackUri;
     private String albumCoverUrl;
     private int durationMs; // duration in milliseconds
+    private int trackIndex;
 
     public NextTrack() {
     }
@@ -69,6 +70,14 @@ public class NextTrack {
 
     public void setDurationMs(int durationMs) {
         this.durationMs = durationMs;
+    }
+
+    public int getTrackIndex() {
+        return trackIndex;
+    }
+
+    public void setTrackIndex(int playlistIndex) {
+        this.trackIndex = playlistIndex;
     }
 
     @Override

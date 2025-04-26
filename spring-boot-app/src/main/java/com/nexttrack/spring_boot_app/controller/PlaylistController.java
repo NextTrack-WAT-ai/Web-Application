@@ -8,6 +8,7 @@ import com.nexttrack.spring_boot_app.Services.ReshuffleService;
 import com.nexttrack.spring_boot_app.Services.SpotifyService;
 import com.nexttrack.spring_boot_app.model.PlaylistSaveRequest;
 import com.nexttrack.spring_boot_app.model.NextTrack;
+import com.nexttrack.spring_boot_app.model.PlaylistFeedback;
 
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
@@ -103,14 +104,7 @@ public class PlaylistController {
     public List<NextTrack> reshuffle(@RequestBody List<NextTrack> tracks) {
         Map<String, NextTrack> songInfoMap = new HashMap<>();
 
-        for (NextTrack track : tracks) {
-            String name = track.getName();
-            List<String> artists = track.getArtists();
-            if (artists != null && !artists.isEmpty()) {
-                String key = name + " - " + artists.get(0); // Only use first artist for key
-                songInfoMap.put(key, track);
-            }
-        }
+        generateSongInfoMap(tracks, songInfoMap);
         // Use the reshuffle service to process the list
         List<Map<String, String>> result = reshuffleService.reshuffle(songInfoMap);
         List<NextTrack> reshuffledTracks = new ArrayList<>();
@@ -140,7 +134,28 @@ public class PlaylistController {
         }
         spotifyService.addItemsToPlaylist_Sync(createPlaylistResult.getPlaylistId(), uris);
 
+        // TODO: determine if feedback is only saved when it is not liked
+        if (!payload.getIsLiked()) {
+            List<PlaylistFeedback> feedbackTracks = new ArrayList<>();
+            for (NextTrack track : tracks) {
+                feedbackTracks
+                        .add(new PlaylistFeedback(track.getArtists().get(0), track.getName(), track.getTrackIndex()));
+            }
+            // reshuffleService.saveReshuffleFeedback(feedbackTracks);
+        }
+
         return createPlaylistResult.getSpotifyUrl();
+    }
+
+    private void generateSongInfoMap(List<NextTrack> tracks, Map<String, NextTrack> songInfoMap) {
+        for (NextTrack track : tracks) {
+            String name = track.getName();
+            List<String> artists = track.getArtists();
+            if (artists != null && !artists.isEmpty()) {
+                String key = name + " - " + artists.get(0); // Only use first artist for key
+                songInfoMap.put(key, track);
+            }
+        }
     }
 
 }

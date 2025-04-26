@@ -5,4 +5,5 @@ export interface NextTrack {
   albumCoverUrl: string;
   durationMs: number;
   trackUri: string;
+  trackIndex?: number;
 }
