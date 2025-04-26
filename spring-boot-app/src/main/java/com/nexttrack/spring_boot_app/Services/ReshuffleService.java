@@ -9,6 +9,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexttrack.spring_boot_app.model.NextTrack;
 import com.nexttrack.spring_boot_app.model.PlaylistFeedback;
+import com.nexttrack.spring_boot_app.requests.FeedbackRequest;
+import com.nexttrack.spring_boot_app.requests.PlaylistReshuffleMLRequest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,16 +29,18 @@ public class ReshuffleService {
                 .build();
     }
 
-    public List<Map<String, String>> reshuffle(Map<String, NextTrack> songInfoMap) {
+    public List<Map<String, String>> reshuffle(String email, Map<String, NextTrack> songInfoMap) {
         try {
             List<Map<String, String>> songDetailsList = new ArrayList<>();
 
             extractSongDetailsList(songInfoMap, songDetailsList);
 
-            System.out.println("Sending payload: " + new ObjectMapper().writeValueAsString(songDetailsList));
+            PlaylistReshuffleMLRequest request = new PlaylistReshuffleMLRequest(email, songDetailsList);
+
+            System.out.println("Sending payload: " + new ObjectMapper().writeValueAsString(request));
             return webClient.post()
                     .uri("/shuffle")
-                    .bodyValue(songDetailsList)
+                    .bodyValue(request)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<Map<String, String>>>() {
                     })
@@ -47,14 +51,18 @@ public class ReshuffleService {
         }
     }
 
-    public List<Map<String, String>> saveReshuffleFeedback(List<PlaylistFeedback> feedbackTracks) {
+    public List<Map<String, String>> saveReshuffleFeedback(String email, List<PlaylistFeedback> feedbackTracks) {
         try {
+            // Create the payload object
+            FeedbackRequest feedbackRequest = new FeedbackRequest(email, feedbackTracks);
 
-            // TOOD: set correct feedback endpoint
-            System.out.println("Sending payload: " + new ObjectMapper().writeValueAsString(feedbackTracks));
+            // Log the payload being sent (for debugging purposes)
+            System.out.println("Sending payload: " + new ObjectMapper().writeValueAsString(feedbackRequest));
+
+            // Send the POST request with the payload
             return webClient.post()
                     .uri("/feedback")
-                    .bodyValue(feedbackTracks)
+                    .bodyValue(feedbackRequest) // Send the FeedbackRequest as the payload
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<Map<String, String>>>() {
                     })

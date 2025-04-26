@@ -18,18 +18,19 @@ export default function Landing() {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState("select"); // "select", "detail", "remixed"
   const navigate = useNavigate();
-
-  const [email, setEmail] = useState(""); 
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     getUserProfile();
     getUserPlaylists();
-    getUserEmail(); 
+    getUserEmail();
   }, []);
 
   useEffect(() => {
-    if (email) {attemptRegister(email);}
-  }, [email])
+    if (email) {
+      attemptRegister(email);
+    }
+  }, [email]);
 
   useEffect(() => {
     if (playlistId && step === "detail") getPlaylist(playlistId);
@@ -37,16 +38,17 @@ export default function Landing() {
   }, [playlistId, step]);
 
   const getUserEmail = async () => {
-    const res = await fetch("http://localhost:8080/user/email"); 
-    const text = await res.text(); 
+    const res = await fetch("http://localhost:8080/user/email");
+    const text = await res.text();
     setEmail(text);
-  }
+    sessionStorage.setItem("email", text);
+  };
 
-  const attemptRegister = async (email:string) => {
-    await fetch(`http://localhost:8080/user/create?email=${email}`, {
-      method : 'POST'
+  const attemptRegister = async (email: string) => {
+    await fetch(`http://localhost:8080/user/create/${email}`, {
+      method: "POST",
     });
-  }
+  };
 
   const getUserProfile = async () => {
     const res = await fetch("http://localhost:8080/user/profile");
@@ -65,7 +67,7 @@ export default function Landing() {
 
   const getPlaylist = async (id: string) => {
     setLoading(true);
-    const res = await fetch(`http://localhost:8080/api/playlist?id=${id}`);
+    const res = await fetch(`http://localhost:8080/api/playlist/${id}`);
     const data = await res.json();
     setPlaylistTracks(data || []);
     setPlaylist(playlists.filter((x) => x.id === id)[0]);
@@ -75,12 +77,16 @@ export default function Landing() {
   const getShuffledPlaylist = async (tracks: NextTrack[]) => {
     setLoading(true);
     try {
+      const payload = {
+        email: email,
+        tracks: tracks,
+      };
       const res = await fetch("http://localhost:8080/api/playlist/reshuffle", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(tracks),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -100,17 +106,26 @@ export default function Landing() {
     }
   };
 
-  const addRemixToAccount = async (email:string, playlistId:string) => {
-    await fetch(`http://localhost:8080/user/remixes/add?email=${email}&playlistid=${playlistId}`, {
-      method : "PATCH"
-    })
-  }
+  const addRemixToAccount = async (email: string, playlistId: string) => {
+    const response = await fetch("/remixes/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, playlistId }),
+    });
+    if (response.ok) {
+      console.log("Remix added successfully!");
+    } else {
+      console.log("Error adding remix.");
+    }
+  };
 
   const saveReshuffledPlaylist = async () => {
     const payload = {
       userId: userProfile?.id,
+      email: email,
       playlist: shuffled,
-      isLiked: !isReordered,
     };
 
     const res = await fetch("http://localhost:8080/api/playlist/save", {
@@ -122,14 +137,6 @@ export default function Landing() {
     const data = await res.text();
     console.log(data);
     setShuffledPlaylistLink(data || "");
-
-    const match = data.match(/\/([^\/?#]+)(?:[?#]|$)/g);
-    const playlistId = match ? match[match.length - 1].replace(/\//g, '') : null;
-    if (!playlistId) {
-      console.error("Something went wrong, playlistId is null"); 
-    } else {
-      addRemixToAccount(email, playlistId); 
-    }
   };
 
   const handleReorder = (reorderedTracks: NextTrack[]) => {
@@ -149,16 +156,18 @@ export default function Landing() {
       >
         NextTrack
       </div>
-      <div 
-      className="header-right"
-      onClick={() => {
-        navigate("/remixes", { // we pass these down to avoid redundant api calls
-          state: {
-            playlists : playlists, 
-            user : userProfile
-          }
-        }); 
-      }}>
+      <div
+        className="header-right"
+        onClick={() => {
+          navigate("/remixes", {
+            // we pass these down to avoid redundant api calls
+            state: {
+              playlists: playlists,
+              user: userProfile,
+            },
+          });
+        }}
+      >
         My Remixes
       </div>
     </div>
@@ -174,12 +183,16 @@ export default function Landing() {
   const UserFooter = () => (
     <div className="user-footer">
       <div className="user-avatar">
-        <img className="user-avatar" src={userProfile?.images[0]?.url} alt="profile" /> 
+        <img
+          className="user-avatar"
+          src={userProfile?.images[0]?.url}
+          alt="profile"
+        />
       </div>
       Logged in: {userProfile?.displayName}
     </div>
   );
-  
+
   const PlaylistSelectionView = () => (
     <div className="page playlist-selection">
       <Logo />

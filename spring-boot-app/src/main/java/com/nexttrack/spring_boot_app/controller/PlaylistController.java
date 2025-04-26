@@ -6,9 +6,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nexttrack.spring_boot_app.Services.ReshuffleService;
 import com.nexttrack.spring_boot_app.Services.SpotifyService;
-import com.nexttrack.spring_boot_app.model.PlaylistSaveRequest;
+import com.nexttrack.spring_boot_app.Services.UserService;
 import com.nexttrack.spring_boot_app.model.NextTrack;
 import com.nexttrack.spring_boot_app.model.PlaylistFeedback;
+import com.nexttrack.spring_boot_app.requests.PlaylistReshuffleRequest;
+import com.nexttrack.spring_boot_app.requests.PlaylistSaveRequest;
 
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
@@ -23,6 +25,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -32,10 +35,13 @@ public class PlaylistController {
 
     private SpotifyService spotifyService;
     private ReshuffleService reshuffleService;
+    private UserService userService;
 
-    public PlaylistController(SpotifyService spotifyService, ReshuffleService reshuffleService) {
+    public PlaylistController(SpotifyService spotifyService, ReshuffleService reshuffleService,
+            UserService userService) {
         this.spotifyService = spotifyService;
         this.reshuffleService = reshuffleService;
+        this.userService = userService;
     }
 
     @GetMapping("playlists/all")
@@ -43,8 +49,8 @@ public class PlaylistController {
         return spotifyService.getAllPlaylists();
     }
 
-    @GetMapping("playlist")
-    public List<NextTrack> getPlaylist(@RequestParam("id") String playlistId) {
+    @GetMapping("playlist/{playlistId}")
+    public List<NextTrack> getPlaylist(@PathVariable String playlistId) {
         PlaylistTrack[] playlistTracks = spotifyService.getSongsFromPlaylist(playlistId);
 
         // Extract track IDs
@@ -101,12 +107,14 @@ public class PlaylistController {
     }
 
     @PostMapping("playlist/reshuffle")
-    public List<NextTrack> reshuffle(@RequestBody List<NextTrack> tracks) {
+    public List<NextTrack> reshuffle(@RequestBody PlaylistReshuffleRequest reshuffleRequest) {
+        String email = reshuffleRequest.getEmail();
+        List<NextTrack> tracks = reshuffleRequest.getTracks();
         Map<String, NextTrack> songInfoMap = new HashMap<>();
 
         generateSongInfoMap(tracks, songInfoMap);
         // Use the reshuffle service to process the list
-        List<Map<String, String>> result = reshuffleService.reshuffle(songInfoMap);
+        List<Map<String, String>> result = reshuffleService.reshuffle(email, songInfoMap);
         List<NextTrack> reshuffledTracks = new ArrayList<>();
         for (Map<String, String> entry : result) {
             String name = entry.get("name");
@@ -134,15 +142,17 @@ public class PlaylistController {
         }
         spotifyService.addItemsToPlaylist_Sync(createPlaylistResult.getPlaylistId(), uris);
 
-        // TODO: determine if feedback is only saved when it is not liked
-        if (!payload.getIsLiked()) {
-            List<PlaylistFeedback> feedbackTracks = new ArrayList<>();
-            for (NextTrack track : tracks) {
-                feedbackTracks
-                        .add(new PlaylistFeedback(track.getArtists().get(0), track.getName(), track.getTrackIndex()));
-            }
-            // reshuffleService.saveReshuffleFeedback(feedbackTracks);
+        List<PlaylistFeedback> feedbackTracks = new ArrayList<>();
+        for (NextTrack track : tracks) {
+            feedbackTracks
+                    .add(new PlaylistFeedback(track.getArtists().get(0), track.getName(), track.getTrackIndex()));
         }
+
+        // update users weights
+        // reshuffleService.saveReshuffleFeedback(payload.getEmail(), feedbackTracks);
+
+        // save remix to user account
+        userService.AddRemix(payload.getEmail(), createPlaylistResult.getPlaylistId());
 
         return createPlaylistResult.getSpotifyUrl();
     }

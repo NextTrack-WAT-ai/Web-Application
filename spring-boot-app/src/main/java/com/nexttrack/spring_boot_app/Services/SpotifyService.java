@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.nexttrack.spring_boot_app.Keys;
-import com.nexttrack.spring_boot_app.model.CreatePlaylistResult;
+import com.nexttrack.spring_boot_app.responses.CreatePlaylistReponse;
 
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -160,13 +160,13 @@ public class SpotifyService {
         try {
             GetCurrentUsersProfileRequest getCurrentUsersProfileRequest = spotifyApi
                     .getCurrentUsersProfile()
-                    .build(); 
-            User user = getCurrentUsersProfileRequest.execute(); 
-            return user.getEmail(); 
+                    .build();
+            User user = getCurrentUsersProfileRequest.execute();
+            return user.getEmail();
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             System.out.println("Error: " + e.getMessage());
         }
-        return null; 
+        return null;
     }
 
     public User getUsersProfile_Sync() {
@@ -182,7 +182,7 @@ public class SpotifyService {
         return null;
     }
 
-    public CreatePlaylistResult createPlaylist_Sync(String userId) {
+    public CreatePlaylistReponse createPlaylist_Sync(String userId) {
         CreatePlaylistRequest createPlaylistRequest = spotifyApi
                 .createPlaylist(userId, "NextTrack Reshuffled Playlist")
                 .build();
@@ -190,7 +190,7 @@ public class SpotifyService {
         try {
             final Playlist playlist = createPlaylistRequest.execute();
 
-            return new CreatePlaylistResult(playlist.getId(), playlist.getExternalUrls().get("spotify"));
+            return new CreatePlaylistReponse(playlist.getId(), playlist.getExternalUrls().get("spotify"));
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             System.out.println("Error: " + e.getMessage());
         }
