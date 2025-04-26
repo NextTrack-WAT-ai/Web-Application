@@ -14,12 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.nexttrack.spring_boot_app.model.NextTrackUser;
+import com.nexttrack.spring_boot_app.model.SongFeaturePreferences;
 import com.nexttrack.spring_boot_app.repository.UserRepo;
 
 @Service
 public class UserService {
     @Autowired
-    private UserRepo userRepo; 
+    private UserRepo userRepo;
 
     public Boolean UserExists(String email) {
         return userRepo.findByEmail(email).isPresent();
@@ -27,12 +28,13 @@ public class UserService {
 
     public ResponseEntity<String> AddUser(String email) {
         if (UserExists(email)) {
-            return new ResponseEntity<>("User already exists", HttpStatus.CONFLICT); 
+            return new ResponseEntity<>("User already exists", HttpStatus.CONFLICT);
         }
-        List<String> emptyRemixes = new ArrayList<String>() {};
-        final NextTrackUser newUser = new NextTrackUser(email, emptyRemixes);
+        List<String> emptyRemixes = new ArrayList<String>() {
+        };
+        final NextTrackUser newUser = new NextTrackUser(email, emptyRemixes, new SongFeaturePreferences());
         userRepo.save(newUser);
-        return new ResponseEntity<>("User created succesfully", HttpStatus.CREATED); 
+        return new ResponseEntity<>("User created succesfully", HttpStatus.CREATED);
     }
 
     public List<String> GetRemixes(String email) { // ensure that we call this after AddUser is finished
@@ -40,7 +42,7 @@ public class UserService {
         if (!User.isPresent()) {
             return new ArrayList<String>(); // we return an empty list, just better error handling
         } else {
-            return User.get().getRemixes(); 
+            return User.get().getRemixes();
         }
     }
 
@@ -48,7 +50,7 @@ public class UserService {
     private MongoTemplate mongoTemplate;
 
     public ResponseEntity<String> AddRemix(String email, String playlistId) {
-        Optional<NextTrackUser> user = userRepo.findByEmail(email); 
+        Optional<NextTrackUser> user = userRepo.findByEmail(email);
         if (!user.isPresent()) {
             return new ResponseEntity<>("No user with this email exists", HttpStatus.BAD_REQUEST);
         }
@@ -57,7 +59,7 @@ public class UserService {
         Update update = new Update().addToSet("remixes", playlistId);
 
         mongoTemplate.updateFirst(query, update, NextTrackUser.class);
-        
-        return new ResponseEntity<>("Playlist added to remixes", HttpStatus.OK); 
+
+        return new ResponseEntity<>("Playlist added to remixes", HttpStatus.OK);
     }
 }

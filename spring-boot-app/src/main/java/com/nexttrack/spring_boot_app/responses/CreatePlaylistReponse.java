@@ -1,10 +1,10 @@
-package com.nexttrack.spring_boot_app.model;
+package com.nexttrack.spring_boot_app.responses;
 
-public class CreatePlaylistResult {
+public class CreatePlaylistReponse {
     public String playlistId;
     public String spotifyUrl;
 
-    public CreatePlaylistResult(String playlistId, String spotifyUrl) {
+    public CreatePlaylistReponse(String playlistId, String spotifyUrl) {
         this.playlistId = playlistId;
         this.spotifyUrl = spotifyUrl;
     }

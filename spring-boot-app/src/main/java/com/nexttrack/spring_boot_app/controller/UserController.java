@@ -15,39 +15,34 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
-    private UserService userService; 
-    private SpotifyService spotifyService; 
+    private UserService userService;
+    private SpotifyService spotifyService;
 
     public UserController(UserService userService, SpotifyService spotifyService) {
         this.userService = userService;
         this.spotifyService = spotifyService;
     }
 
-    @GetMapping("/email") // we call the endpoints in the order coded 
+    @GetMapping("/email") // we call the endpoints in the order coded
     public String getEmail() {
-        return spotifyService.getCurrentUsersEmail(); 
+        return spotifyService.getCurrentUsersEmail();
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<String> createUser(@RequestParam String email) {
+    @PostMapping("/create/{email}")
+    public ResponseEntity<String> createUser(@PathVariable String email) {
         return userService.AddUser(email);
     }
 
-    @GetMapping("/remixes")
-    public List<String> getAllRemixes(@RequestParam String email) {
-        return userService.GetRemixes(email); 
-    }
-
-    @CrossOrigin(origins = "http://localhost:5173") // for some reason we need to add this explicitly
-    @PatchMapping("/remixes/add")
-    public ResponseEntity<String> addRemix(@RequestParam String email, @RequestParam String playlistid) {
-        return userService.AddRemix(email, playlistid); 
+    @GetMapping("/remixes/{email}")
+    public List<String> getAllRemixes(@PathVariable String email) {
+        return userService.GetRemixes(email);
     }
 
     @GetMapping("/profile")

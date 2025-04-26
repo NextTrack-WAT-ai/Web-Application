@@ -1,11 +1,13 @@
-package com.nexttrack.spring_boot_app.model;
+package com.nexttrack.spring_boot_app.requests;
 
 import java.util.List;
 
+import com.nexttrack.spring_boot_app.model.NextTrack;
+
 public class PlaylistSaveRequest {
     private String userId;
+    private String email;
     private List<NextTrack> playlist;
-    private Boolean isLiked;
 
     // Getters and setters
     public String getUserId() {
@@ -24,7 +26,11 @@ public class PlaylistSaveRequest {
         this.playlist = playlist;
     }
 
-    public boolean getIsLiked(){
-        return isLiked;
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
