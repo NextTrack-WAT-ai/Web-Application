@@ -8,6 +8,7 @@ import com.nexttrack.spring_boot_app.Services.SpotifyService;
 import com.nexttrack.spring_boot_app.Services.UserService;
 import com.nexttrack.spring_boot_app.model.NextTrack;
 import com.nexttrack.spring_boot_app.model.PlaylistFeedback;
+import com.nexttrack.spring_boot_app.requests.FeedbackRequest;
 import com.nexttrack.spring_boot_app.requests.PlaylistReshuffleRequest;
 import com.nexttrack.spring_boot_app.requests.PlaylistSaveRequest;
 
@@ -154,6 +155,11 @@ public class PlaylistController {
         userService.AddRemix(payload.getEmail(), createPlaylistResult.getPlaylistId());
 
         return createPlaylistResult.getSpotifyUrl();
+    }
+
+    @PostMapping("playlist/feedback")
+    public List<Map<String, String>> feedback(@RequestBody FeedbackRequest payload) {
+        return reshuffleService.saveReshuffleFeedback(payload.getEmail(), payload.getFeedbackTracks()); 
     }
 
     private void generateSongInfoMap(List<NextTrack> tracks, Map<String, NextTrack> songInfoMap) {
