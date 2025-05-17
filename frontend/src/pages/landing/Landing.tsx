@@ -253,53 +253,125 @@ export default function Landing() {
             tracks={playlistTracks}
             onReorder={handleReorder}
             isDraggable={false}
+            isRemix={false}
           />
         </>
       )}
     </div>
   );
 
-  const RemixedPlaylistView = () => (
-    <div className="page playlist-detail">
-      <Logo />
-      <h2 className="section-title">Remixed Playlist</h2>
+  const RemixedPlaylistView = () => {
+    const [isRemixFirst, setIsRemixFirst] = useState(true);
 
-      {loading ? (
-        <div>Loading remixed playlist...</div>
-      ) : (
-        <>
-          <div className="highlighted-playlist">
-            <img
-              src={playlist?.images?.[0]?.url || "/api/placeholder/50/50"}
-              alt="Playlist"
-              className="playlist-img"
-            />
-            <div className="playlist-details">
-              <div>{shuffled.length} songs</div>
-              <div className="playlist-name">Remix of {playlist?.name}</div>
-              <button onClick={saveReshuffledPlaylist}>
-                Add Playlist To Account
-              </button>
+    const swapPlaylists = () => {
+      setIsRemixFirst((prev) => !prev);
+    };
+
+    // Define playlist data based on order
+    const playlistsToShow = isRemixFirst
+      ? [
+          {
+            label: "Remixed",
+            tracks: shuffled,
+            isRemix: true,
+            isDraggable: true,
+          },
+          {
+            label: "Original",
+            tracks: playlistTracks,
+            isRemix: false,
+            isDraggable: false,
+          },
+        ]
+      : [
+          {
+            label: "Original",
+            tracks: playlistTracks,
+            isRemix: false,
+            isDraggable: false,
+          },
+          {
+            label: "Remixed",
+            tracks: shuffled,
+            isRemix: true,
+            isDraggable: true,
+          },
+        ];
+
+    return (
+      <div className="page playlist-detail">
+        <Logo />
+
+        {loading ? (
+          <div>Loading remixed playlist...</div>
+        ) : (
+          <>
+            <div className="highlighted-playlist">
+              <img
+                src={playlist?.images?.[0]?.url || "/api/placeholder/50/50"}
+                alt="Playlist"
+                className="playlist-img"
+              />
+              <div className="playlist-details">
+                <div>{shuffled.length} songs</div>
+                <div className="playlist-name">Remix of {playlist?.name}</div>
+                <button onClick={saveReshuffledPlaylist}>
+                  Add Playlist To Account
+                </button>
+              </div>
             </div>
-          </div>
 
-          <SongTable
-            tracks={shuffled}
-            onReorder={handleReorder}
-            isDraggable={true}
-          />
-          {shuffledPlaylistLink && (
             <div
-              className="view-playlist-button"
-              onClick={() => window.open(shuffledPlaylistLink, "_blank")}
+              className="view-button"
+              onClick={swapPlaylists}
+              style={{ margin: "1rem 0", width: "fit-content" }}
             >
-              Listen To Remixed Playlist
+              Swap Playlists
             </div>
-          )}
-        </>
-      )}
-    </div>
-  );
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "2rem",
+                width: "100%",
+                height: "50vh",
+              }}
+            >
+              {playlistsToShow.map((pl, index) => (
+                <div
+                  key={pl.label}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                    width: "100%",
+                  }}
+                >
+                  <h3>{pl.label}</h3>
+                  <SongTable
+                    tracks={pl.tracks}
+                    onReorder={handleReorder}
+                    isDraggable={pl.isDraggable}
+                    isRemix={pl.isRemix}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {shuffledPlaylistLink && (
+              <div
+                className="view-playlist-button"
+                onClick={() => window.open(shuffledPlaylistLink, "_blank")}
+              >
+                Listen To Remixed Playlist
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div>

@@ -5,8 +5,8 @@ body {
 }
 
 .page {
-  margin: 0 auto;
-  width: 50%;
+  padding: 0 5rem;
+  width: 100%;
 }
 
 .header {
