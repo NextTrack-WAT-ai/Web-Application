@@ -10,4 +10,11 @@ export interface NextTrack {
   key?: string;
   loudness?: string;
   energy?: number;
+  danceability?: number;
+  mode?: string;
+  speechiness?: number;
+  acousticness?: number;
+  instrumentalness?: number;
+  liveness?: number;
+  valence?: number;
 }

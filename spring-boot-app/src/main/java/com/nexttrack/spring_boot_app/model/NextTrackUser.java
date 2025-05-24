@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document // mongo stuff
+@Document(collection = "users")
 public class NextTrackUser {
     private String email;
     private List<String> remixes;
