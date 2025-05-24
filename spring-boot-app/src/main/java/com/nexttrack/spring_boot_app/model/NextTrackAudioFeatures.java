@@ -1,15 +1,13 @@
 package com.nexttrack.spring_boot_app.model;
 
-import java.util.List;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-public class NextTrack {
+@Document(collection = "next_track_audio_features")
+public class NextTrackAudioFeatures {
     private String trackId;
     private String name;
-    private List<String> artists;
-    private String trackUri;
-    private String albumCoverUrl;
-    private int durationMs;
-    private int trackIndex;
+    private String artist;
+    private int year;
     private double danceability;
     private double energy;
     private int key;
@@ -21,19 +19,31 @@ public class NextTrack {
     private double liveness;
     private double valence;
     private double tempo;
+    private int timeSignature;
+    private String tags;
 
-    public NextTrack() {
+    public NextTrackAudioFeatures() {
     }
 
-    public NextTrack(String trackId, String name, List<String> artists, String trackUri, String albumCoverUrl,
-            int durationMs) {
+    public NextTrackAudioFeatures(String trackId, int year, double danceability, int key, double loudness, int mode,
+            double speechiness, double acousticness, double instrumentalness,
+            double liveness, double valence, double tempo, int timeSignature) {
         this.trackId = trackId;
-        this.name = name;
-        this.artists = artists;
-        this.trackUri = trackUri;
-        this.albumCoverUrl = albumCoverUrl;
-        this.durationMs = durationMs;
+        this.year = year;
+        this.danceability = danceability;
+        this.key = key;
+        this.loudness = loudness;
+        this.mode = mode;
+        this.speechiness = speechiness;
+        this.acousticness = acousticness;
+        this.instrumentalness = instrumentalness;
+        this.liveness = liveness;
+        this.valence = valence;
+        this.tempo = tempo;
+        this.timeSignature = timeSignature;
     }
+
+    // Getters and Setters
 
     public String getTrackId() {
         return trackId;
@@ -51,44 +61,20 @@ public class NextTrack {
         this.name = name;
     }
 
-    public List<String> getArtists() {
-        return artists;
+    public String getArtist() {
+        return artist;
     }
 
-    public void setArtists(List<String> artists) {
-        this.artists = artists;
+    public void setArtist(String artist) {
+        this.artist = artist;
     }
 
-    public String getTrackUri() {
-        return trackUri;
+    public int getYear() {
+        return year;
     }
 
-    public void setTrackUri(String trackUri) {
-        this.trackUri = trackUri;
-    }
-
-    public String getAlbumCoverUrl() {
-        return albumCoverUrl;
-    }
-
-    public void setAlbumCoverUrl(String albumCoverUrl) {
-        this.albumCoverUrl = albumCoverUrl;
-    }
-
-    public int getDurationMs() {
-        return durationMs;
-    }
-
-    public void setDurationMs(int durationMs) {
-        this.durationMs = durationMs;
-    }
-
-    public int getTrackIndex() {
-        return trackIndex;
-    }
-
-    public void setTrackIndex(int playlistIndex) {
-        this.trackIndex = playlistIndex;
+    public void setYear(int year) {
+        this.year = year;
     }
 
     public double getDanceability() {
@@ -99,20 +85,20 @@ public class NextTrack {
         this.danceability = danceability;
     }
 
-    public double getEnergy() {
-        return energy;
-    }
-
-    public void setEnergy(double energy) {
-        this.energy = energy;
-    }
-
     public int getKey() {
         return key;
     }
 
     public void setKey(int key) {
         this.key = key;
+    }
+
+    public double getEnergy() {
+        return energy;
+    }
+
+    public void setEnergy(double energy) {
+        this.energy = energy;
     }
 
     public double getLoudness() {
@@ -179,18 +165,28 @@ public class NextTrack {
         this.tempo = tempo;
     }
 
+    public int getTimeSignature() {
+        return timeSignature;
+    }
+
+    public void setTimeSignature(int timeSignature) {
+        this.timeSignature = timeSignature;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
+
     @Override
     public String toString() {
-        return "ReshuffledTrack{" +
+        return "NextTrackAudioFeature{" +
                 "trackId='" + trackId + '\'' +
-                ", name='" + name + '\'' +
-                ", artists=" + artists +
-                ", trackUri='" + trackUri + '\'' +
-                ", albumCoverUrl='" + albumCoverUrl + '\'' +
-                ", durationMs=" + durationMs +
-                ", trackIndex=" + trackIndex +
+                ", year=" + year +
                 ", danceability=" + danceability +
-                ", energy=" + energy +
                 ", key=" + key +
                 ", loudness=" + loudness +
                 ", mode=" + mode +
@@ -200,6 +196,7 @@ public class NextTrack {
                 ", liveness=" + liveness +
                 ", valence=" + valence +
                 ", tempo=" + tempo +
+                ", timeSignature=" + timeSignature +
                 '}';
     }
 }

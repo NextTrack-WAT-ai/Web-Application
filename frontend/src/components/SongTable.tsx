@@ -60,18 +60,6 @@ const SortableRow = ({ track, id, index, isDraggable }: SortableRowProps) => {
     zIndex: isDragging ? 1 : 0,
   };
 
-  // Mock data
-  const trackData = {
-    tempo: track.tempo || Math.floor(Math.random() * 30) + 110,
-    key:
-      track.key ||
-      ["5A", "6A", "7A", "8A", "9A", "10A", "11B", "12B"][
-        Math.floor(Math.random() * 8)
-      ],
-    loudness: track.loudness || (Math.random() * 0.9 + 0.1).toFixed(3),
-    energy: track.energy || Math.floor(Math.random() * 40) + 60,
-  };
-
   return (
     <Box
       ref={setNodeRef}
@@ -126,25 +114,25 @@ const SortableRow = ({ track, id, index, isDraggable }: SortableRowProps) => {
 
       <Box sx={{ width: 60, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {trackData.tempo}
+          {track.tempo}
         </Typography>
       </Box>
 
       <Box sx={{ width: 60, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {trackData.key}
+          {track.key}
         </Typography>
       </Box>
 
       <Box sx={{ width: 90, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {trackData.loudness}
+          {track.loudness}
         </Typography>
       </Box>
 
       <Box sx={{ width: 60, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {trackData.energy}
+          {track.energy}
         </Typography>
       </Box>
 
@@ -159,18 +147,6 @@ const SortableRow = ({ track, id, index, isDraggable }: SortableRowProps) => {
 
 // Non-sortable row for when dragging is disabled
 const StaticRow = ({ track, index }: { track: NextTrack; index: number }) => {
-  // Mock data for additional columns
-  const trackData = {
-    tempo: track.tempo || Math.floor(Math.random() * 30) + 110,
-    key:
-      track.key ||
-      ["5A", "6A", "7A", "8A", "9A", "10A", "11B", "12B"][
-        Math.floor(Math.random() * 8)
-      ],
-    loudness: track.loudness || (Math.random() * 0.9 + 0.1).toFixed(3),
-    energy: track.energy || Math.floor(Math.random() * 40) + 60,
-  };
-
   return (
     <Box
       sx={{
@@ -221,25 +197,25 @@ const StaticRow = ({ track, index }: { track: NextTrack; index: number }) => {
 
       <Box sx={{ width: 60, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {trackData.tempo}
+          {track.tempo}
         </Typography>
       </Box>
 
       <Box sx={{ width: 60, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {trackData.key}
+          {track.key}
         </Typography>
       </Box>
 
       <Box sx={{ width: 90, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {trackData.loudness}
+          {track.loudness}
         </Typography>
       </Box>
 
       <Box sx={{ width: 60, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {trackData.energy}
+          {track.energy}
         </Typography>
       </Box>
 

@@ -29,9 +29,9 @@ public class ReshuffleService {
                 .build();
     }
 
-    public List<Map<String, String>> reshuffle(String email, Map<String, NextTrack> songInfoMap) {
+    public List<NextTrack> reshuffle(String email, Map<String, NextTrack> songInfoMap) {
         try {
-            List<Map<String, String>> songDetailsList = new ArrayList<>();
+            List<NextTrack> songDetailsList = new ArrayList<>();
 
             extractSongDetailsList(songInfoMap, songDetailsList);
 
@@ -42,7 +42,7 @@ public class ReshuffleService {
                     .uri("/shuffle")
                     .bodyValue(request)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, String>>>() {
+                    .bodyToMono(new ParameterizedTypeReference<List<NextTrack>>() {
                     })
                     .block();
         } catch (Exception e) {
@@ -57,7 +57,8 @@ public class ReshuffleService {
             FeedbackRequest feedbackRequest = new FeedbackRequest(email, feedbackTracks);
 
             // Log the payload being sent (for debugging purposes)
-            System.out.println("Sending payload: " + new ObjectMapper().writeValueAsString(feedbackRequest));
+            // System.out.println("Sending payload: " + new
+            // ObjectMapper().writeValueAsString(feedbackRequest));
 
             // Send the POST request with the payload
             return webClient.post()
@@ -73,20 +74,9 @@ public class ReshuffleService {
         }
     }
 
-    private void extractSongDetailsList(Map<String, NextTrack> songInfoMap, List<Map<String, String>> songDetailsList) {
-        for (String key : songInfoMap.keySet()) {
-            String[] parts = key.split(" - ", 2);
-
-            if (parts.length == 2) {
-                String songName = parts[0];
-                String artistName = parts[1];
-
-                Map<String, String> songMap = new HashMap<>();
-                songMap.put("name", songName);
-                songMap.put("artist", artistName);
-
-                songDetailsList.add(songMap);
-            }
+    private void extractSongDetailsList(Map<String, NextTrack> songInfoMap, List<NextTrack> songDetailsList) {
+        for (NextTrack track : songInfoMap.values()) {
+            songDetailsList.add(track);
         }
     }
 }

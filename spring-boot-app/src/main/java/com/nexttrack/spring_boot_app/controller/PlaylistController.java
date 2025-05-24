@@ -3,10 +3,12 @@ package com.nexttrack.spring_boot_app.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nexttrack.spring_boot_app.Services.NextTrackAudioFeaturesService;
 import com.nexttrack.spring_boot_app.Services.ReshuffleService;
 import com.nexttrack.spring_boot_app.Services.SpotifyService;
 import com.nexttrack.spring_boot_app.Services.UserService;
 import com.nexttrack.spring_boot_app.model.NextTrack;
+import com.nexttrack.spring_boot_app.model.NextTrackAudioFeatures;
 import com.nexttrack.spring_boot_app.model.PlaylistFeedback;
 import com.nexttrack.spring_boot_app.requests.FeedbackRequest;
 import com.nexttrack.spring_boot_app.requests.PlaylistReshuffleRequest;
@@ -24,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.springframework.data.mongodb.core.aggregation.ComparisonOperators.Ne;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,12 +39,15 @@ public class PlaylistController {
     private SpotifyService spotifyService;
     private ReshuffleService reshuffleService;
     private UserService userService;
+    private NextTrackAudioFeaturesService nextTrackAudioFeaturesService;
 
     public PlaylistController(SpotifyService spotifyService, ReshuffleService reshuffleService,
-            UserService userService) {
+            UserService userService,
+            NextTrackAudioFeaturesService nextTrackAudioFeaturesService) {
         this.spotifyService = spotifyService;
         this.reshuffleService = reshuffleService;
         this.userService = userService;
+        this.nextTrackAudioFeaturesService = nextTrackAudioFeaturesService;
     }
 
     @GetMapping("playlists/all")
@@ -100,8 +106,23 @@ public class PlaylistController {
             if (full.getAlbum() != null && full.getAlbum().getImages().length > 0) {
                 albumCover = full.getAlbum().getImages()[0].getUrl();
             }
+            var track = new NextTrack(id, name, artistNames, uri, albumCover, durationMs);
+            NextTrackAudioFeatures audioFeatures = nextTrackAudioFeaturesService.findOrCreateTrack(name,
+                    artistNames.get(0));
 
-            return new NextTrack(id, name, artistNames, uri, albumCover, durationMs);
+            track.setDanceability(audioFeatures.getDanceability());
+            track.setEnergy(audioFeatures.getEnergy());
+            track.setKey(audioFeatures.getKey());
+            track.setLoudness(audioFeatures.getLoudness());
+            track.setMode(audioFeatures.getMode());
+            track.setSpeechiness(audioFeatures.getSpeechiness());
+            track.setAcousticness(audioFeatures.getAcousticness());
+            track.setInstrumentalness(audioFeatures.getInstrumentalness());
+            track.setLiveness(audioFeatures.getLiveness());
+            track.setValence(audioFeatures.getValence());
+            track.setTempo(audioFeatures.getTempo());
+
+            return track;
 
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
@@ -114,22 +135,9 @@ public class PlaylistController {
 
         generateSongInfoMap(tracks, songInfoMap);
         // Use the reshuffle service to process the list
-        List<Map<String, String>> result = reshuffleService.reshuffle(email, songInfoMap);
-        List<NextTrack> reshuffledTracks = new ArrayList<>();
-        for (Map<String, String> entry : result) {
-            String name = entry.get("name");
-            String artist = entry.get("artist");
-            String key = name + " - " + artist;
+        List<NextTrack> result = reshuffleService.reshuffle(email, songInfoMap);
 
-            NextTrack track = songInfoMap.get(key);
-            if (track != null) {
-                reshuffledTracks.add(track);
-            } else {
-                System.err.println("Track not found for key: " + key);
-            }
-        }
-
-        return reshuffledTracks;
+        return result;
     }
 
     @PostMapping("playlist/save")
@@ -159,7 +167,7 @@ public class PlaylistController {
 
     @PostMapping("playlist/feedback")
     public List<Map<String, String>> feedback(@RequestBody FeedbackRequest payload) {
-        return reshuffleService.saveReshuffleFeedback(payload.getEmail(), payload.getFeedbackTracks()); 
+        return reshuffleService.saveReshuffleFeedback(payload.getEmail(), payload.getFeedbackTracks());
     }
 
     private void generateSongInfoMap(List<NextTrack> tracks, Map<String, NextTrack> songInfoMap) {
@@ -168,6 +176,7 @@ public class PlaylistController {
             List<String> artists = track.getArtists();
             if (artists != null && !artists.isEmpty()) {
                 String key = name + " - " + artists.get(0); // Only use first artist for key
+
                 songInfoMap.put(key, track);
             }
         }
