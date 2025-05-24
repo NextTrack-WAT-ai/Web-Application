@@ -1,16 +1,5 @@
 import React, { useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Avatar,
-  Box,
-} from "@mui/material";
-import { DragHandle as DragHandleIcon } from "@mui/icons-material";
+import { Box, Typography } from "@mui/material";
 import {
   DndContext,
   closestCenter,
@@ -34,8 +23,10 @@ interface SongTableProps {
   tracks: NextTrack[];
   onReorder?: (reorderedTracks: NextTrack[]) => void;
   isDraggable?: boolean;
+  isRemix: boolean;
 }
 
+// Helper function to format track duration
 const formatDuration = (ms: number): string => {
   const minutes = Math.floor(ms / 60000);
   const seconds = Math.floor((ms % 60000) / 1000)
@@ -47,10 +38,11 @@ const formatDuration = (ms: number): string => {
 interface SortableRowProps {
   track: NextTrack;
   id: string;
+  index: number;
   isDraggable: boolean;
 }
 
-const SortableRow = ({ track, id, isDraggable }: SortableRowProps) => {
+const SortableRow = ({ track, id, index, isDraggable }: SortableRowProps) => {
   const {
     attributes,
     listeners,
@@ -68,67 +60,203 @@ const SortableRow = ({ track, id, isDraggable }: SortableRowProps) => {
     zIndex: isDragging ? 1 : 0,
   };
 
+  // Mock data
+  const trackData = {
+    tempo: track.tempo || Math.floor(Math.random() * 30) + 110,
+    key:
+      track.key ||
+      ["5A", "6A", "7A", "8A", "9A", "10A", "11B", "12B"][
+        Math.floor(Math.random() * 8)
+      ],
+    loudness: track.loudness || (Math.random() * 0.9 + 0.1).toFixed(3),
+    energy: track.energy || Math.floor(Math.random() * 40) + 60,
+  };
+
   return (
-    <TableRow ref={setNodeRef} style={style}>
-      <TableCell sx={{ color: "white", width: "60px" }}>
-        {isDraggable && (
-          <Box
-            {...attributes}
-            {...listeners}
-            sx={{
-              cursor: "grab",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <DragHandleIcon sx={{ color: "#888" }} />
-          </Box>
-        )}
-      </TableCell>
-      <TableCell sx={{ color: "white" }}>{track.name}</TableCell>
-      <TableCell sx={{ color: "white" }}>{track.artists.join(", ")}</TableCell>
-      <TableCell>
-        <Avatar
-          src={track.albumCoverUrl || "/api/placeholder/40/40"}
-          alt="Album Cover"
-          variant="square"
-          sx={{ width: 40, height: 40 }}
+    <Box
+      ref={setNodeRef}
+      style={style}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        py: 1,
+        px: 2,
+        borderBottom: "1px solid #333",
+        "&:hover": {
+          backgroundColor: "#2a2a2a",
+        },
+      }}
+    >
+      <Box sx={{ width: "30px", color: "#aaa", mr: 1 }}>
+        <Typography variant="body2">{index + 1}</Typography>
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          flex: 1,
+          mr: 2,
+          ...(isDraggable && { cursor: "grab" }),
+        }}
+        {...(isDraggable && { ...attributes, ...listeners })}
+      >
+        <Box
+          sx={{
+            width: 50,
+            height: 50,
+            mr: 2,
+            flexShrink: 0,
+            bgcolor: "#333",
+            backgroundImage: `url(${
+              track.albumCoverUrl || "/api/placeholder/50/50"
+            })`,
+            backgroundSize: "cover",
+          }}
         />
-      </TableCell>
-      <TableCell sx={{ color: "white" }}>
-        {formatDuration(track.durationMs)}
-      </TableCell>
-    </TableRow>
+        <Box>
+          <Typography variant="body1" sx={{ fontWeight: 500, color: "white" }}>
+            {track.name}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#aaa" }}>
+            {track.artists.join(", ")}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Box sx={{ width: 60, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "#aaa" }}>
+          {trackData.tempo}
+        </Typography>
+      </Box>
+
+      <Box sx={{ width: 60, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "#aaa" }}>
+          {trackData.key}
+        </Typography>
+      </Box>
+
+      <Box sx={{ width: 90, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "#aaa" }}>
+          {trackData.loudness}
+        </Typography>
+      </Box>
+
+      <Box sx={{ width: 60, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "#aaa" }}>
+          {trackData.energy}
+        </Typography>
+      </Box>
+
+      <Box sx={{ width: 70, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "#aaa" }}>
+          {formatDuration(track.durationMs)}
+        </Typography>
+      </Box>
+    </Box>
   );
 };
 
 // Non-sortable row for when dragging is disabled
 const StaticRow = ({ track, index }: { track: NextTrack; index: number }) => {
+  // Mock data for additional columns
+  const trackData = {
+    tempo: track.tempo || Math.floor(Math.random() * 30) + 110,
+    key:
+      track.key ||
+      ["5A", "6A", "7A", "8A", "9A", "10A", "11B", "12B"][
+        Math.floor(Math.random() * 8)
+      ],
+    loudness: track.loudness || (Math.random() * 0.9 + 0.1).toFixed(3),
+    energy: track.energy || Math.floor(Math.random() * 40) + 60,
+  };
+
   return (
-    <TableRow key={track.trackId || index}>
-      <TableCell sx={{ color: "white", width: "60px" }}></TableCell>
-      <TableCell sx={{ color: "white" }}>{track.name}</TableCell>
-      <TableCell sx={{ color: "white" }}>{track.artists.join(", ")}</TableCell>
-      <TableCell>
-        <Avatar
-          src={track.albumCoverUrl || "/api/placeholder/40/40"}
-          alt="Album Cover"
-          variant="square"
-          sx={{ width: 40, height: 40 }}
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        py: 1,
+        px: 2,
+        borderBottom: "1px solid #333",
+        "&:hover": {
+          backgroundColor: "#2a2a2a",
+        },
+      }}
+    >
+      <Box sx={{ width: "30px", color: "#aaa", mr: 1 }}>
+        <Typography variant="body2">{index + 1}</Typography>
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          flex: 1,
+          mr: 2,
+        }}
+      >
+        <Box
+          sx={{
+            width: 50,
+            height: 50,
+            mr: 2,
+            flexShrink: 0,
+            bgcolor: "#333",
+            backgroundImage: `url(${
+              track.albumCoverUrl || "/api/placeholder/50/50"
+            })`,
+            backgroundSize: "cover",
+          }}
         />
-      </TableCell>
-      <TableCell sx={{ color: "white" }}>
-        {formatDuration(track.durationMs)}
-      </TableCell>
-    </TableRow>
+        <Box>
+          <Typography variant="body1" sx={{ fontWeight: 500, color: "white" }}>
+            {track.name}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#aaa" }}>
+            {track.artists.join(", ")}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Box sx={{ width: 60, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "#aaa" }}>
+          {trackData.tempo}
+        </Typography>
+      </Box>
+
+      <Box sx={{ width: 60, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "#aaa" }}>
+          {trackData.key}
+        </Typography>
+      </Box>
+
+      <Box sx={{ width: 90, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "#aaa" }}>
+          {trackData.loudness}
+        </Typography>
+      </Box>
+
+      <Box sx={{ width: 60, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "#aaa" }}>
+          {trackData.energy}
+        </Typography>
+      </Box>
+
+      <Box sx={{ width: 70, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ color: "#aaa" }}>
+          {formatDuration(track.durationMs)}
+        </Typography>
+      </Box>
+    </Box>
   );
 };
 
 const SongTable: React.FC<SongTableProps> = ({
   tracks,
   onReorder,
-  isDraggable = true, // Default to true to maintain backward compatibility
+  isDraggable = true,
+  isRemix,
 }) => {
   const [items, setItems] = useState(tracks);
 
@@ -165,68 +293,100 @@ const SongTable: React.FC<SongTableProps> = ({
   };
 
   return (
-    <TableContainer
-      component={Paper}
-      sx={{ backgroundColor: "#1e1e1e", overflow: "hidden" }}
+    <Box
+      sx={{
+        background: isRemix
+          ? "linear-gradient(to bottom, #000000, #1a1a1a, #2a2a15, #3a3a1a, #4a4a1f)" // dim yellow
+          : "linear-gradient(to bottom, #000000, #1a1a1a, #153315, #1f4a1f, #2a662a)", // dim green
+        borderRadius: 2,
+        overflow: "hidden",
+        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.3)",
+        border: "1px solid #2a2a2a",
+        width: "100%",
+        height: "100%",
+      }}
     >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          borderBottom: "1px solid #333",
+          py: 1,
+          px: 2,
+        }}
+      >
+        <Box sx={{ width: "30px", mr: 1 }}></Box>
+        <Typography variant="body2" sx={{ flex: 1, mr: 2, color: "#aaa" }}>
+          Song
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ width: 60, textAlign: "center", color: "#aaa" }}
+        >
+          Tempo
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ width: 60, textAlign: "center", color: "#aaa" }}
+        >
+          Key
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ width: 90, textAlign: "center", color: "#aaa" }}
+        >
+          Loudness
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ width: 60, textAlign: "center", color: "#aaa" }}
+        >
+          Energy
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ width: 70, textAlign: "center", color: "#aaa" }}
+        >
+          Length
+        </Typography>
+      </Box>
+
+      {/* Table Body */}
       {isDraggable ? (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ color: "white", width: "60px" }}></TableCell>
-                <TableCell sx={{ color: "white" }}>Song</TableCell>
-                <TableCell sx={{ color: "white" }}>Artist</TableCell>
-                <TableCell sx={{ color: "white" }}>Album</TableCell>
-                <TableCell sx={{ color: "white" }}>Duration</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <SortableContext
-                items={items.map(
-                  (track, index) => track.trackId || index.toString()
-                )}
-                strategy={verticalListSortingStrategy}
-              >
-                {items.map((track, index) => (
-                  <SortableRow
-                    key={track.trackId || index}
-                    track={track}
-                    id={track.trackId || index.toString()}
-                    isDraggable={isDraggable}
-                  />
-                ))}
-              </SortableContext>
-            </TableBody>
-          </Table>
-        </DndContext>
-      ) : (
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ color: "white", width: "60px" }}></TableCell>
-              <TableCell sx={{ color: "white" }}>Song</TableCell>
-              <TableCell sx={{ color: "white" }}>Artist</TableCell>
-              <TableCell sx={{ color: "white" }}>Album</TableCell>
-              <TableCell sx={{ color: "white" }}>Duration</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+          <SortableContext
+            items={items.map(
+              (track, index) => track.trackId || index.toString()
+            )}
+            strategy={verticalListSortingStrategy}
+          >
             {items.map((track, index) => (
-              <StaticRow
+              <SortableRow
                 key={track.trackId || index}
                 track={track}
+                id={track.trackId || index.toString()}
                 index={index}
+                isDraggable={isDraggable}
               />
             ))}
-          </TableBody>
-        </Table>
+          </SortableContext>
+        </DndContext>
+      ) : (
+        <>
+          {items.map((track, index) => (
+            <StaticRow
+              key={track.trackId || index}
+              track={track}
+              index={index}
+            />
+          ))}
+        </>
       )}
-    </TableContainer>
+    </Box>
   );
 };
 
