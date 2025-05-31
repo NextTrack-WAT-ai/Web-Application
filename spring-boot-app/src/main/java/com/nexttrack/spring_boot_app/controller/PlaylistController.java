@@ -55,6 +55,18 @@ public class PlaylistController {
         return spotifyService.getAllPlaylists();
     }
 
+    @GetMapping("/remixes/{email}")
+    public PlaylistSimplified[] getAllRemixes(@PathVariable String email) {
+        var remixIds = userService.GetRemixes(email);
+        var playlists = spotifyService.getAllPlaylists();
+        List<PlaylistSimplified> filteredPlaylists = Arrays.stream(playlists)
+                .filter(playlist -> remixIds.contains(playlist.getId()))
+                .toList();
+
+        return filteredPlaylists.toArray(new PlaylistSimplified[0]);
+
+    }
+
     @GetMapping("playlist/{playlistId}")
     public List<NextTrack> getPlaylist(@PathVariable String playlistId) {
         PlaylistTrack[] playlistTracks = spotifyService.getSongsFromPlaylist(playlistId);

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { SpotifyPlaylist } from "../../models/spotify-playlist";
 import SongTable from "../../components/SongTable";
 import { NextTrack } from "../../models/next-track";
-
+import Navbar from "../../components/Navbar";
 export default function Landing() {
   const [playlistId, setPlaylistId] = useState("");
   const [userProfile, setUserProfile] = useState<UserProfile>();
@@ -24,6 +24,15 @@ export default function Landing() {
     getUserProfile();
     getUserPlaylists();
     getUserEmail();
+    // check sesison storage for editing playlist id
+    const editingPlaylist = sessionStorage.getItem("editingPlaylist");
+    if (editingPlaylist) {
+      setPlaylist(JSON.parse(editingPlaylist));
+      setPlaylistId(JSON.parse(editingPlaylist).id);
+      getPlaylist(JSON.parse(editingPlaylist).id);
+      setStep("detail");
+      sessionStorage.removeItem("editingPlaylist");
+    }
   }, []);
 
   useEffect(() => {
@@ -70,7 +79,6 @@ export default function Landing() {
     const res = await fetch(`http://localhost:8080/api/playlist/${id}`);
     const data = await res.json();
     setPlaylistTracks(data || []);
-    setPlaylist(playlists.filter((x) => x.id === id)[0]);
     setLoading(false);
   };
 
@@ -146,33 +154,6 @@ export default function Landing() {
 
   // ------------------ COMPONENTS ------------------
 
-  const Header = () => (
-    <div className="header">
-      <div
-        className="logo-text"
-        onClick={() => {
-          navigate("/");
-        }}
-      >
-        NextTrack
-      </div>
-      <div
-        className="header-right"
-        onClick={() => {
-          navigate("/remixes", {
-            // we pass these down to avoid redundant api calls
-            state: {
-              playlists: playlists,
-              user: userProfile,
-            },
-          });
-        }}
-      >
-        My Remixes
-      </div>
-    </div>
-  );
-
   const Logo = () => (
     <div className="logo">
       <div className="logo-inner">NextTrack</div>
@@ -193,11 +174,29 @@ export default function Landing() {
     </div>
   );
 
+  const Stepper = () => (
+    <div style={{ width: "100%", alignSelf: "flex-start", marginTop: "1rem" }}>
+      {step !== "select" && (
+        <button
+          className="view-button"
+          onClick={() => {
+            if (step === "remixed") {
+              setStep("detail");
+              setShuffledPlaylistLink("");
+            }
+            if (step === "detail") setStep("select");
+          }}
+        >
+          ← Back
+        </button>
+      )}
+    </div>
+  );
+
   const PlaylistSelectionView = () => (
     <div className="page playlist-selection">
       <Logo />
       <h2 className="section-title">Choose a Playlist</h2>
-
       {loading ? (
         <div>Loading playlists...</div>
       ) : (
@@ -215,6 +214,7 @@ export default function Landing() {
                   className="view-button"
                   onClick={() => {
                     setPlaylistId(p.id);
+                    setPlaylist(p);
                     setStep("detail");
                   }}
                 >
@@ -232,7 +232,6 @@ export default function Landing() {
     <div className="page playlist-detail">
       <Logo />
       <h2 className="section-title">Viewing Playlist</h2>
-
       {loading ? (
         <div>Loading playlist...</div>
       ) : (
@@ -255,53 +254,19 @@ export default function Landing() {
             isDraggable={false}
             isRemix={false}
           />
+          <Stepper />
         </>
       )}
     </div>
   );
 
   const RemixedPlaylistView = () => {
-    const [isRemixFirst, setIsRemixFirst] = useState(true);
-
-    const swapPlaylists = () => {
-      setIsRemixFirst((prev) => !prev);
-    };
-
-    // Define playlist data based on order
-    const playlistsToShow = isRemixFirst
-      ? [
-          {
-            label: "Remixed",
-            tracks: shuffled,
-            isRemix: true,
-            isDraggable: true,
-          },
-          {
-            label: "Original",
-            tracks: playlistTracks,
-            isRemix: false,
-            isDraggable: false,
-          },
-        ]
-      : [
-          {
-            label: "Original",
-            tracks: playlistTracks,
-            isRemix: false,
-            isDraggable: false,
-          },
-          {
-            label: "Remixed",
-            tracks: shuffled,
-            isRemix: true,
-            isDraggable: true,
-          },
-        ];
+    const [showOriginal, setShowOriginal] = useState(true);
 
     return (
       <div className="page playlist-detail">
         <Logo />
-
+        <h2 className="section-title">Remixed Playlist</h2>
         {loading ? (
           <div>Loading remixed playlist...</div>
         ) : (
@@ -323,10 +288,12 @@ export default function Landing() {
 
             <div
               className="view-button"
-              onClick={swapPlaylists}
+              onClick={() => setShowOriginal(!showOriginal)}
               style={{ margin: "1rem 0", width: "fit-content" }}
             >
-              Swap Playlists
+              {showOriginal
+                ? "Hide Original Playlist"
+                : "Show Original Playlist"}
             </div>
 
             <div
@@ -338,27 +305,43 @@ export default function Landing() {
                 height: "50vh",
               }}
             >
-              {playlistsToShow.map((pl, index) => (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                  width: showOriginal ? "50%" : "100%",
+                }}
+              >
+                <h3>Remixed</h3>
+                <SongTable
+                  tracks={shuffled}
+                  onReorder={handleReorder}
+                  isDraggable={true}
+                  isRemix={true}
+                />
+              </div>
+
+              {showOriginal && (
                 <div
-                  key={pl.label}
                   style={{
                     display: "flex",
                     flexDirection: "column",
                     gap: "1rem",
-                    width: "100%",
+                    width: "50%",
                   }}
                 >
-                  <h3>{pl.label}</h3>
+                  <h3>Original</h3>
                   <SongTable
-                    tracks={pl.tracks}
+                    tracks={playlistTracks}
                     onReorder={handleReorder}
-                    isDraggable={pl.isDraggable}
-                    isRemix={pl.isRemix}
+                    isDraggable={false}
+                    isRemix={false}
                   />
                 </div>
-              ))}
+              )}
             </div>
-
+            <Stepper />
             {shuffledPlaylistLink && (
               <div
                 className="view-playlist-button"
@@ -375,7 +358,7 @@ export default function Landing() {
 
   return (
     <div>
-      <Header />
+      <Navbar />
       {step === "select" && <PlaylistSelectionView />}
       {step === "detail" && <PlaylistDetailView />}
       {step === "remixed" && <RemixedPlaylistView />}
