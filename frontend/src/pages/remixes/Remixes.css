@@ -1,5 +1,9 @@
 .remixes-container {
-  padding: 20px;
+  padding: 5rem;
+}
+
+.playlist-item {
+  margin-top: 1rem;
 }
 
 .remix-tracks {
@@ -32,4 +36,22 @@
 .track-artist {
   color: #666;
   font-size: 0.9em;
+}
+
+.playlist-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.edit-button {
+  padding: 5px 15px;
+  background-color: #1db954; /* Spotify green */
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.edit-button:hover {
+  background-color: #1ed760;
 }

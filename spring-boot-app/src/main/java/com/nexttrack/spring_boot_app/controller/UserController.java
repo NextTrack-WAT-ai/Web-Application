@@ -37,11 +37,6 @@ public class UserController {
         return userService.AddUser(email);
     }
 
-    @GetMapping("/remixes/{email}")
-    public List<String> getAllRemixes(@PathVariable String email) {
-        return userService.GetRemixes(email);
-    }
-
     @GetMapping("/profile")
     public ResponseEntity<User> profile() {
         User user = spotifyService.getUsersProfile_Sync();
