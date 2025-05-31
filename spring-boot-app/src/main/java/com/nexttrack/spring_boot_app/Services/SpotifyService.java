@@ -84,7 +84,6 @@ public class SpotifyService {
             if (credentials.getRefreshToken() != null) {
                 spotifyApi.setRefreshToken(credentials.getRefreshToken());
             }
-            System.out.println("Access token refreshed successfully.");
         } catch (Exception exception) {
             System.out.println("Error refreshing access token: " + exception.getMessage());
         }
