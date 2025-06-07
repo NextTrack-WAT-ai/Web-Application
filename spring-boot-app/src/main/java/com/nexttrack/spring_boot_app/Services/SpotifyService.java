@@ -77,7 +77,20 @@ public class SpotifyService {
         }
     }
 
+    public void refreshAccessToken() {
+        try {
+            AuthorizationCodeCredentials credentials = spotifyApi.authorizationCodeRefresh().build().execute();
+            spotifyApi.setAccessToken(credentials.getAccessToken());
+            if (credentials.getRefreshToken() != null) {
+                spotifyApi.setRefreshToken(credentials.getRefreshToken());
+            }
+        } catch (Exception exception) {
+            System.out.println("Error refreshing access token: " + exception.getMessage());
+        }
+    }
+
     public Artist[] getUserTopArtists() {
+        refreshAccessToken();
         final GetUsersTopArtistsRequest getUsersTopArtistsRequest = spotifyApi.getUsersTopArtists()
                 .time_range("medium_term")
                 .limit(10)
@@ -94,6 +107,7 @@ public class SpotifyService {
     }
 
     public PlaylistSimplified[] getAllPlaylists() {
+        refreshAccessToken();
         final GetListOfCurrentUsersPlaylistsRequest getListOfUsersPlaylistsRequest = spotifyApi
                 .getListOfCurrentUsersPlaylists()
                 .build();
@@ -108,6 +122,7 @@ public class SpotifyService {
     }
 
     public PlaylistSimplified[] getRemixes(List<String> remixes) {
+        refreshAccessToken();
         final GetListOfCurrentUsersPlaylistsRequest getListOfUsersPlaylistsRequest = spotifyApi
                 .getListOfCurrentUsersPlaylists()
                 .build();
@@ -122,6 +137,7 @@ public class SpotifyService {
     }
 
     public PlaylistTrack[] getSongsFromPlaylist(String playlistId) {
+        refreshAccessToken();
         final GetPlaylistsItemsRequest getPlaylistItemsRequest = spotifyApi.getPlaylistsItems(playlistId)
                 .build();
 
@@ -136,11 +152,13 @@ public class SpotifyService {
 
     public List<Track> getSeveralTracks(List<String> trackIds)
             throws IOException, SpotifyWebApiException, ParseException {
+        refreshAccessToken();
         String[] idsArray = trackIds.toArray(new String[0]);
         return Arrays.asList(spotifyApi.getSeveralTracks(idsArray).build().execute());
     }
 
     public String getCurrentUsersId() {
+        refreshAccessToken();
         try {
             GetCurrentUsersProfileRequest getCurrentUsersProfileRequest = spotifyApi
                     .getCurrentUsersProfile()
@@ -157,6 +175,7 @@ public class SpotifyService {
     }
 
     public String getCurrentUsersEmail() {
+        refreshAccessToken();
         try {
             GetCurrentUsersProfileRequest getCurrentUsersProfileRequest = spotifyApi
                     .getCurrentUsersProfile()
@@ -170,6 +189,7 @@ public class SpotifyService {
     }
 
     public User getUsersProfile_Sync() {
+        refreshAccessToken();
         String userId = getCurrentUsersId();
         GetUsersProfileRequest getUsersProfileRequest = spotifyApi.getUsersProfile(userId).build();
         try {
@@ -183,6 +203,7 @@ public class SpotifyService {
     }
 
     public CreatePlaylistReponse createPlaylist_Sync(String userId) {
+        refreshAccessToken();
         CreatePlaylistRequest createPlaylistRequest = spotifyApi
                 .createPlaylist(userId, "NextTrack Reshuffled Playlist")
                 .build();
@@ -198,6 +219,7 @@ public class SpotifyService {
     }
 
     public void addItemsToPlaylist_Sync(String playlistId, String[] uris) {
+        refreshAccessToken();
         AddItemsToPlaylistRequest addItemsToPlaylistRequest = spotifyApi
                 .addItemsToPlaylist(playlistId, uris)
                 .position(0)
