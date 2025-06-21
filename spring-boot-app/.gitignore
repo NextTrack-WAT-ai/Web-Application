@@ -31,4 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
-spring-boot-app/src/main/resources/application.properties
+/src/main/resources/application.properties
+**/application.properties

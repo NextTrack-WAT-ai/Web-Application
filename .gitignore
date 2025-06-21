@@ -1,2 +1,5 @@
 .env
 .vscode
+**/myenv
+**/.env
+**/tracks.csv

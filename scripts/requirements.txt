@@ -1,0 +1,5 @@
+kagglehub
+pandas 
+pymongo
+certifi
+dotenv
