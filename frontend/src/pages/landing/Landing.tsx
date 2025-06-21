@@ -7,6 +7,7 @@ import SongTable from "../../components/SongTable";
 import { NextTrack } from "../../models/next-track";
 import Navbar from "../../components/Navbar";
 export default function Landing() {
+  const apiUrl = import.meta.env.VITE_API_URL as string;
   const [playlistId, setPlaylistId] = useState("");
   const [userProfile, setUserProfile] = useState<UserProfile>();
   const [playlistTracks, setPlaylistTracks] = useState<NextTrack[]>([]);
@@ -47,27 +48,27 @@ export default function Landing() {
   }, [playlistId, step]);
 
   const getUserEmail = async () => {
-    const res = await fetch("http://localhost:8080/user/email");
+    const res = await fetch(`${apiUrl}/user/email`);
     const text = await res.text();
     setEmail(text);
     sessionStorage.setItem("email", text);
   };
 
   const attemptRegister = async (email: string) => {
-    await fetch(`http://localhost:8080/user/create/${email}`, {
+    await fetch(`${apiUrl}/user/create/${email}`, {
       method: "POST",
     });
   };
 
   const getUserProfile = async () => {
-    const res = await fetch("http://localhost:8080/user/profile");
+    const res = await fetch(`${apiUrl}/user/profile`);
     const text = await res.text();
     setUserProfile(JSON.parse(text));
   };
 
   const getUserPlaylists = async () => {
     setLoading(true);
-    const res = await fetch("http://localhost:8080/api/playlists/all");
+    const res = await fetch(`${apiUrl}/api/playlists/all`);
     const data = await res.json();
     setPlaylists(data || []);
     console.log(data);
@@ -76,7 +77,7 @@ export default function Landing() {
 
   const getPlaylist = async (id: string) => {
     setLoading(true);
-    const res = await fetch(`http://localhost:8080/api/playlist/${id}`);
+    const res = await fetch(`${apiUrl}/api/playlist/${id}`);
     const data = await res.json();
     setPlaylistTracks(data || []);
     setLoading(false);
@@ -89,7 +90,7 @@ export default function Landing() {
         email: email,
         tracks: tracks,
       };
-      const res = await fetch("http://localhost:8080/api/playlist/reshuffle", {
+      const res = await fetch(`${apiUrl}/api/playlist/reshuffle`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -136,7 +137,7 @@ export default function Landing() {
       playlist: shuffled,
     };
 
-    const res = await fetch("http://localhost:8080/api/playlist/save", {
+    const res = await fetch(`${apiUrl}/api/playlist/save`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
