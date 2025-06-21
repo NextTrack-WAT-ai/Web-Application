@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 export default function Remixes() {
   const [loading, setLoading] = useState(true);
   const [remixes, setRemixes] = useState<SpotifyPlaylist[]>([]);
+  const apiUrl = import.meta.env.VITE_API_URL as string;
 
   useEffect(() => {
     getRemixes();
@@ -14,7 +15,7 @@ export default function Remixes() {
   const getRemixes = async () => {
     setLoading(true);
     const email = sessionStorage.getItem("email");
-    const res = await fetch(`http://localhost:8080/api/remixes/${email}`);
+    const res = await fetch(`${apiUrl}/api/remixes/${email}`);
     const data = await res.json();
     setRemixes(data);
     console.log(data);

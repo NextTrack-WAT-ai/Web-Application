@@ -1,8 +1,9 @@
 import "./Home.css";
 
 export default function Home() {
+  const apiUrl = import.meta.env.VITE_API_URL as string;
   const SpotifyLogin = async () => {
-    const response = await fetch("http://localhost:8080/api/login");
+    const response = await fetch(`${apiUrl}/api/login`);
     const text = await response.text();
     window.location.replace(text);
   };
