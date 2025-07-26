@@ -1,6 +1,11 @@
 export interface SpotifyPlaylist {
   id: string;
   name: string;
+  externalUrls: {
+    externalUrls: {
+      spotify: string;
+    };
+  };
   images: Image[];
   owner: { display_name: string };
 }
