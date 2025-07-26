@@ -15,5 +15,7 @@ export interface UserProfile {
   product: string | null;
   type: string;
   uri: string;
-  images: string; 
+  images: {
+    url: string;
+  }[];
 }

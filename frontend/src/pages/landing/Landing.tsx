@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import "./Landing.css";
 import { UserProfile } from "../../models/user-profile";
-import { useNavigate } from "react-router-dom";
 import { SpotifyPlaylist } from "../../models/spotify-playlist";
 import SongTable from "../../components/SongTable";
 import { NextTrack } from "../../models/next-track";
@@ -13,12 +12,10 @@ export default function Landing() {
   const [playlistTracks, setPlaylistTracks] = useState<NextTrack[]>([]);
   const [playlist, setPlaylist] = useState<SpotifyPlaylist>();
   const [shuffled, setShuffled] = useState<NextTrack[]>([]);
-  const [isReordered, setIsReordered] = useState(false);
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [shuffledPlaylistLink, setShuffledPlaylistLink] = useState("");
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState("select"); // "select", "detail", "remixed"
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
 
   useEffect(() => {
@@ -115,20 +112,20 @@ export default function Landing() {
     }
   };
 
-  const addRemixToAccount = async (email: string, playlistId: string) => {
-    const response = await fetch("/remixes/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, playlistId }),
-    });
-    if (response.ok) {
-      console.log("Remix added successfully!");
-    } else {
-      console.log("Error adding remix.");
-    }
-  };
+  // const addRemixToAccount = async (email: string, playlistId: string) => {
+  //   const response = await fetch("/remixes/add", {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify({ email, playlistId }),
+  //   });
+  //   if (response.ok) {
+  //     console.log("Remix added successfully!");
+  //   } else {
+  //     console.log("Error adding remix.");
+  //   }
+  // };
 
   const saveReshuffledPlaylist = async () => {
     const payload = {
@@ -150,7 +147,6 @@ export default function Landing() {
 
   const handleReorder = (reorderedTracks: NextTrack[]) => {
     setShuffled(reorderedTracks);
-    setIsReordered(true);
   };
 
   // ------------------ COMPONENTS ------------------
