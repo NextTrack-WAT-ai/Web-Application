@@ -97,7 +97,6 @@ public class PlaylistController {
             }
         }
 
-        // Construct NextTrack list
         return Arrays.stream(playlistTracks).map(pt -> {
             String id = pt.getTrack().getId();
             Track full = fullTrackMap.get(id);

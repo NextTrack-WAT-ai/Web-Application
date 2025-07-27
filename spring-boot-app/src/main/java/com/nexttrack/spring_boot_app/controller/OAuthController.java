@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nexttrack.spring_boot_app.Services.SpotifyService;
 
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -17,26 +19,31 @@ public class OAuthController {
 
     private final SpotifyService spotifyService;
 
-    public OAuthController(SpotifyService spotifyService){
+    @Value("${FRONTEND_URL}")
+    private String frontendUrl;
+
+    public OAuthController(SpotifyService spotifyService) {
         this.spotifyService = spotifyService;
     }
+
     @GetMapping("login")
     @ResponseBody
     public String spotifyLogin() {
         return spotifyService.getSpotifyLoginUrl();
     }
-     
+
     @GetMapping("get-user-code")
-    public String getMethodName(@RequestParam("code") String userCode, HttpServletResponse response) throws IOException {
+    public String getMethodName(@RequestParam("code") String userCode, HttpServletResponse response)
+            throws IOException {
         String accessToken = spotifyService.getTokens(userCode);
 
         if (accessToken != null) {
-            response.sendRedirect("http://localhost:5173/landing/");
+            response.sendRedirect(frontendUrl + "/landing/");
             return accessToken;
         } else {
-            response.sendRedirect("http://localhost:5173/error/");
+            response.sendRedirect(frontendUrl + "/error/");
             return null;
         }
-    }    
-    
+    }
+
 }

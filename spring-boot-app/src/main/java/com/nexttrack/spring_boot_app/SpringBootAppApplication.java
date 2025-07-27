@@ -1,6 +1,7 @@
 package com.nexttrack.spring_boot_app;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -12,19 +13,22 @@ import com.nexttrack.spring_boot_app.repository.UserRepo;
 @SpringBootApplication
 public class SpringBootAppApplication {
 	@Autowired
-	UserRepo userRepo; 
+	UserRepo userRepo;
 
 	public static void main(String[] args) {
 		SpringApplication.run(SpringBootAppApplication.class, args);
 	}
- 
+
 	@Bean
 	public WebMvcConfigurer corsConfigurer() {
 		return new WebMvcConfigurer() {
+			@Value("${FRONTEND_URL}")
+			private String frontendUrl;
+
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
-				registry.addMapping("/**")  
-						.allowedOrigins("http://localhost:5173")  // DO NOT MODIFY
+				registry.addMapping("/**")
+						.allowedOrigins(frontendUrl)
 						.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 						.allowedHeaders("*")
 						.allowCredentials(true);
