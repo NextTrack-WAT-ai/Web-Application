@@ -42,6 +42,10 @@ interface SortableRowProps {
   isDraggable: boolean;
 }
 
+function format2(n?: number) {
+  return typeof n === "number" ? n.toFixed(2) : "";
+}
+
 const SortableRow = ({ track, id, index, isDraggable }: SortableRowProps) => {
   const {
     attributes,
@@ -114,7 +118,7 @@ const SortableRow = ({ track, id, index, isDraggable }: SortableRowProps) => {
 
       <Box sx={{ width: 60, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {track.tempo}
+          {format2(track.tempo)}
         </Typography>
       </Box>
 
@@ -126,13 +130,13 @@ const SortableRow = ({ track, id, index, isDraggable }: SortableRowProps) => {
 
       <Box sx={{ width: 90, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {track.loudness}
+          {format2(track.loudness)}
         </Typography>
       </Box>
 
       <Box sx={{ width: 60, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {track.energy}
+          {format2(track.energy)}
         </Typography>
       </Box>
 
@@ -197,7 +201,7 @@ const StaticRow = ({ track, index }: { track: NextTrack; index: number }) => {
 
       <Box sx={{ width: 60, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {track.tempo}
+          {format2(track.tempo)}
         </Typography>
       </Box>
 
@@ -209,13 +213,13 @@ const StaticRow = ({ track, index }: { track: NextTrack; index: number }) => {
 
       <Box sx={{ width: 90, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {track.loudness}
+          {format2(track.loudness)}
         </Typography>
       </Box>
 
       <Box sx={{ width: 60, textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "#aaa" }}>
-          {track.energy}
+          {format2(track.energy)}
         </Typography>
       </Box>
 

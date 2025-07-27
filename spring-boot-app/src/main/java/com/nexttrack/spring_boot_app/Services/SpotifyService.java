@@ -5,7 +5,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
-import com.nexttrack.spring_boot_app.Keys;
+import com.nexttrack.spring_boot_app.configurations.SpotifyConfig;
 import com.nexttrack.spring_boot_app.responses.CreatePlaylistReponse;
 
 import se.michaelthelin.spotify.SpotifyApi;
@@ -29,22 +29,21 @@ import se.michaelthelin.spotify.requests.data.users_profile.GetCurrentUsersProfi
 import se.michaelthelin.spotify.requests.data.users_profile.GetUsersProfileRequest;
 
 import org.apache.hc.core5.http.ParseException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SpotifyService {
 
-    private String clientId = Keys.getKey("SPOTIFY_CLIENT_ID");
-    private String clientSecret = Keys.getKey("SPOTIFY_CLIENT_SECRET");
-
-    private static final URI redirectUri = URI.create("http://localhost:8080/api/get-user-code");
+    private URI redirectUri;
 
     private final SpotifyApi spotifyApi;
 
-    public SpotifyService() {
+    public SpotifyService(SpotifyConfig config) {
+        this.redirectUri = URI.create(config.getApiUrl() + "/api/get-user-code");
         this.spotifyApi = new SpotifyApi.Builder()
-                .setClientId(clientId)
-                .setClientSecret(clientSecret)
+                .setClientId(config.getClientId())
+                .setClientSecret(config.getClientSecret())
                 .setRedirectUri(redirectUri)
                 .build();
     }

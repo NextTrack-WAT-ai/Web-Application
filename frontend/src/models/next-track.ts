@@ -7,8 +7,8 @@ export interface NextTrack {
   trackUri: string;
   trackIndex?: number;
   tempo?: number;
-  key?: string;
-  loudness?: string;
+  key?: number;
+  loudness?: number;
   energy?: number;
   danceability?: number;
   mode?: string;
