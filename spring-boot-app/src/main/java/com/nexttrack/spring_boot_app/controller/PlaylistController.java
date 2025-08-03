@@ -69,26 +69,23 @@ public class PlaylistController {
 
     @GetMapping("playlist/{playlistId}")
     public List<NextTrack> getPlaylist(@PathVariable String playlistId) {
-        PlaylistTrack[] playlistTracks = spotifyService.getSongsFromPlaylist(playlistId);
-
-        // Extract track IDs
-        List<String> trackIds = Arrays.stream(playlistTracks)
+        PlaylistTrack[] items = spotifyService.getSongsFromPlaylist(playlistId);
+        List<String> ids = Arrays.stream(items)
                 .map(pt -> pt.getTrack().getId())
-                .collect(Collectors.toList());
+                .toList();
 
-        // Create a map of full track info keyed by track ID
-        Map<String, Track> fullTrackMap = new HashMap<>();
+        Map<String, Track> fullMap = new HashMap<>();
         int batchSize = 50;
 
-        for (int i = 0; i < trackIds.size(); i += batchSize) {
-            int end = Math.min(i + batchSize, trackIds.size());
-            List<String> batch = trackIds.subList(i, end);
+        for (int i = 0; i < ids.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, ids.size());
+            List<String> batch = ids.subList(i, end);
 
             try {
                 List<Track> fullTracks = spotifyService.getSeveralTracks(batch);
 
                 for (Track track : fullTracks) {
-                    fullTrackMap.put(track.getId(), track);
+                    fullMap.put(track.getId(), track);
                 }
 
             } catch (Exception e) {
@@ -97,45 +94,51 @@ public class PlaylistController {
             }
         }
 
-        return Arrays.stream(playlistTracks).map(pt -> {
-            String id = pt.getTrack().getId();
-            Track full = fullTrackMap.get(id);
+        List<NextTrackAudioFeaturesService.TrackKey> keys = new ArrayList<>();
+        List<NextTrack> dtoList = new ArrayList<>();
 
+        for (PlaylistTrack pt : items) {
+            Track full = fullMap.get(pt.getTrack().getId());
             if (full == null)
-                return null;
+                continue;
 
-            String name = full.getName();
+            NextTrack nt = new NextTrack(
+                    full.getId(),
+                    full.getName(),
+                    Arrays.stream(full.getArtists()).map(a -> a.getName()).toList(),
+                    full.getUri(),
+                    full.getAlbum() != null && full.getAlbum().getImages().length > 0
+                            ? full.getAlbum().getImages()[0].getUrl()
+                            : null,
+                    full.getDurationMs());
+            String artist = full.getArtists()[0].getName();
+            keys.add(new NextTrackAudioFeaturesService.TrackKey(full.getName(), artist));
+            dtoList.add(nt);
+        }
 
-            List<String> artistNames = Arrays.stream(full.getArtists())
-                    .map(ArtistSimplified::getName)
-                    .collect(Collectors.toList());
+        Map<NextTrackAudioFeaturesService.TrackKey, NextTrackAudioFeatures> features = nextTrackAudioFeaturesService
+                .batchFindOrCreate(keys);
 
-            String uri = full.getUri();
-            int durationMs = full.getDurationMs();
-
-            String albumCover = null;
-            if (full.getAlbum() != null && full.getAlbum().getImages().length > 0) {
-                albumCover = full.getAlbum().getImages()[0].getUrl();
+        for (int i = 0; i < dtoList.size(); i++) {
+            NextTrack nt = dtoList.get(i);
+            var key = keys.get(i);
+            NextTrackAudioFeatures f = features.get(key);
+            if (f != null) {
+                nt.setDanceability(f.getDanceability());
+                nt.setEnergy(f.getEnergy());
+                nt.setKey(f.getKey());
+                nt.setLoudness(f.getLoudness());
+                nt.setMode(f.getMode());
+                nt.setSpeechiness(f.getSpeechiness());
+                nt.setAcousticness(f.getAcousticness());
+                nt.setInstrumentalness(f.getInstrumentalness());
+                nt.setLiveness(f.getLiveness());
+                nt.setValence(f.getValence());
+                nt.setTempo(f.getTempo());
             }
-            var track = new NextTrack(id, name, artistNames, uri, albumCover, durationMs);
-            NextTrackAudioFeatures audioFeatures = nextTrackAudioFeaturesService.findOrCreateTrack(name,
-                    artistNames.get(0));
+        }
 
-            track.setDanceability(audioFeatures.getDanceability());
-            track.setEnergy(audioFeatures.getEnergy());
-            track.setKey(audioFeatures.getKey());
-            track.setLoudness(audioFeatures.getLoudness());
-            track.setMode(audioFeatures.getMode());
-            track.setSpeechiness(audioFeatures.getSpeechiness());
-            track.setAcousticness(audioFeatures.getAcousticness());
-            track.setInstrumentalness(audioFeatures.getInstrumentalness());
-            track.setLiveness(audioFeatures.getLiveness());
-            track.setValence(audioFeatures.getValence());
-            track.setTempo(audioFeatures.getTempo());
-
-            return track;
-
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        return dtoList;
     }
 
     @PostMapping("playlist/reshuffle")

@@ -293,6 +293,7 @@ const SongTable: React.FC<SongTableProps> = ({
           borderBottom: "1px solid #333",
           py: 1,
           px: 2,
+          overflowY: "auto",
         }}
       >
         <Box sx={{ width: "30px", mr: 1 }}></Box>
