@@ -37,7 +37,8 @@ public class ReshuffleService {
 
             PlaylistReshuffleMLRequest request = new PlaylistReshuffleMLRequest(email, songDetailsList);
 
-            System.out.println("Sending payload: " + new ObjectMapper().writeValueAsString(request));
+            // System.out.println("Sending payload: " + new
+            // ObjectMapper().writeValueAsString(request));
             return webClient.post()
                     .uri("/shuffle")
                     .bodyValue(request)

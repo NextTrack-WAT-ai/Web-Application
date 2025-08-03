@@ -18,6 +18,7 @@ import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.model_objects.specification.User;
+import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
 import se.michaelthelin.spotify.requests.data.personalization.simplified.GetUsersTopArtistsRequest;
@@ -78,13 +79,17 @@ public class SpotifyService {
 
     public void refreshAccessToken() {
         try {
-            AuthorizationCodeCredentials credentials = spotifyApi.authorizationCodeRefresh().build().execute();
-            spotifyApi.setAccessToken(credentials.getAccessToken());
-            if (credentials.getRefreshToken() != null) {
-                spotifyApi.setRefreshToken(credentials.getRefreshToken());
+            AuthorizationCodeRefreshRequest refreshRequest = spotifyApi.authorizationCodeRefresh()
+                    .refresh_token(spotifyApi.getRefreshToken())
+                    .build();
+
+            AuthorizationCodeCredentials creds = refreshRequest.execute();
+            spotifyApi.setAccessToken(creds.getAccessToken());
+            if (creds.getRefreshToken() != null) {
+                spotifyApi.setRefreshToken(creds.getRefreshToken());
             }
-        } catch (Exception exception) {
-            System.out.println("Error refreshing access token: " + exception.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error refreshing token: " + e.getMessage());
         }
     }
 

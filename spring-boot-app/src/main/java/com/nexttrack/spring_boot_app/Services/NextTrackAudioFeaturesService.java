@@ -1,5 +1,7 @@
 package com.nexttrack.spring_boot_app.Services;
 
+import com.nexttrack.spring_boot_app.Services.NextTrackAudioFeaturesService.AudioFeaturesResponse;
+import com.nexttrack.spring_boot_app.Services.NextTrackAudioFeaturesService.TrackKey;
 import com.nexttrack.spring_boot_app.model.NextTrackAudioFeatures;
 import com.nexttrack.spring_boot_app.repository.NextTrackAudioFeaturesRepo;
 
@@ -8,14 +10,21 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class NextTrackAudioFeaturesService {
 
     private final NextTrackAudioFeaturesRepo nextTrackAudioFeaturesRepo;
     private final WebClient webClient;
+
+    public record TrackKey(String name, String artist) {
+    }
 
     public NextTrackAudioFeaturesService(NextTrackAudioFeaturesRepo nextTrackAudioFeaturesRepo) {
         this.nextTrackAudioFeaturesRepo = nextTrackAudioFeaturesRepo;
@@ -55,6 +64,68 @@ public class NextTrackAudioFeaturesService {
                     entity.setValence(f.getValence());
                     return nextTrackAudioFeaturesRepo.save(entity);
                 });
+    }
+
+    public Map<TrackKey, NextTrackAudioFeatures> batchFindOrCreate(List<TrackKey> keys) {
+        List<NextTrackAudioFeatures> existing = nextTrackAudioFeaturesRepo
+                .findAllByNameAndArtistIn(keys);
+
+        // TODO: optimize retreival of existing tracks
+        Map<TrackKey, NextTrackAudioFeatures> map = existing.stream()
+                .collect(Collectors.toMap(
+                        e -> new TrackKey(e.getName(), e.getArtist()),
+                        Function.identity(),
+                        (existingValue, duplicateValue) -> existingValue));
+        List<TrackKey> missing = keys.stream()
+                .filter(k -> !map.containsKey(k))
+                .toList();
+
+        if (!missing.isEmpty()) {
+            try {
+                List<Map<String, String>> tracksList = missing.stream()
+                        .map(k -> Map.of("track_name", k.name, "artist", k.artist))
+                        .toList();
+
+                Map<String, Object> payload = Map.of("tracks", tracksList);
+                // System.out.println("Sending payload: " + new
+                // ObjectMapper().writeValueAsString(payload));
+
+                List<AudioFeaturesResponse> responses = webClient.post()
+                        .uri("https://feature-extraction-service-production.up.railway.app/extract_features_batch")
+                        .bodyValue(payload)
+                        .retrieve()
+                        .bodyToFlux(AudioFeaturesResponse.class)
+                        .collectList()
+                        .block();
+
+                List<NextTrackAudioFeatures> toSave = responses.stream().map(r -> {
+                    var f = r.getFeatures();
+                    NextTrackAudioFeatures e = new NextTrackAudioFeatures();
+                    e.setName(r.getTrack().split(" - ")[0]); // track format is "name - artist"
+                    e.setArtist(r.getTrack().split(" - ")[1]);
+                    e.setAcousticness(f.getAcousticness());
+                    e.setDanceability(f.getDanceability());
+                    e.setEnergy(f.getEnergy());
+                    e.setInstrumentalness(f.getInstrumentalness());
+                    e.setKey(f.getKey());
+                    e.setLiveness(f.getLiveness());
+                    e.setLoudness(f.getLoudness());
+                    e.setSpeechiness(f.getSpeechiness());
+                    e.setTempo(f.getTempo());
+                    e.setValence(f.getValence());
+                    return e;
+                }).toList();
+
+                List<NextTrackAudioFeatures> saved = nextTrackAudioFeaturesRepo.saveAll(toSave);
+
+                saved.forEach(e -> map.put(new TrackKey(e.getName(), e.getArtist()), e));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        return map;
     }
 
     public static class AudioFeaturesResponse {
