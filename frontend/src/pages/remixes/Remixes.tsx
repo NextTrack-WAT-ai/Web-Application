@@ -1,12 +1,14 @@
 import "./Remixes.css";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { SpotifyPlaylist } from "../../models/spotify-playlist";
-import { useNavigate } from "react-router-dom";
+
 export default function Remixes() {
   const [loading, setLoading] = useState(true);
   const [remixes, setRemixes] = useState<SpotifyPlaylist[]>([]);
   const apiUrl = import.meta.env.VITE_API_URL as string;
+  const navigate = useNavigate();
 
   useEffect(() => {
     getRemixes();
@@ -14,15 +16,18 @@ export default function Remixes() {
 
   const getRemixes = async () => {
     setLoading(true);
-    const email = sessionStorage.getItem("email");
-    const res = await fetch(`${apiUrl}/api/remixes/${email}`);
-    const data = await res.json();
-    setRemixes(data);
-    console.log(data);
+    const authToken = sessionStorage.getItem("authToken");
+    if (!authToken) {
+      navigate("/");
+      return;
+    }
+    const res = await fetch(`${apiUrl}/api/remixes`, {
+      headers: { "X-Auth-Token": authToken },
+    });
+    if (!res.ok) { setLoading(false); return; }
+    setRemixes((await res.json()) ?? []);
     setLoading(false);
   };
-
-  const navigate = useNavigate();
 
   return (
     <div>
@@ -33,45 +38,20 @@ export default function Remixes() {
         ) : (
           <>
             <h2 className="section-title">Remixes</h2>
-            <div
-              className="remix-list"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: "20px",
-              }}
-            >
+            <div className="remix-list" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px" }}>
               {remixes.map((p: SpotifyPlaylist, index) => (
                 <div className="playlist-item" key={p.id || index}>
-                  <img
-                    src={p.images?.[0]?.url || "/api/placeholder/50/50"}
-                    alt="Playlist"
-                    className="playlist-img"
-                  />
+                  <img src={p.images?.[0]?.url || "/api/placeholder/50/50"} alt="Playlist" className="playlist-img" />
                   <div className="playlist-info">
                     <div className="playlist-name">{p.name}</div>
                     <div className="playlist-buttons">
-                      <button
-                        className="view-button"
-                        onClick={() => {
-                          window.open(
-                            p.externalUrls.externalUrls.spotify,
-                            "_blank"
-                          );
-                        }}
-                      >
+                      <button className="view-button" onClick={() => window.open(p.externalUrls.externalUrls.spotify, "_blank")}>
                         View on Spotify
                       </button>
-                      <button
-                        className="edit-button"
-                        onClick={() => {
-                          sessionStorage.setItem(
-                            "editingPlaylist",
-                            JSON.stringify(p)
-                          );
-                          navigate("/landing");
-                        }}
-                      >
+                      <button className="edit-button" onClick={() => {
+                        sessionStorage.setItem("editingPlaylist", JSON.stringify(p));
+                        navigate("/landing");
+                      }}>
                         Edit
                       </button>
                     </div>

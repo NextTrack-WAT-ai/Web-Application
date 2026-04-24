@@ -30,7 +30,7 @@ public class SpringBootAppApplication {
 				registry.addMapping("/**")
 						.allowedOrigins(frontendUrl)
 						.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-						.allowedHeaders("*")
+						.allowedHeaders("Content-Type", "Accept", "X-Auth-Token")
 						.allowCredentials(true);
 			}
 		};

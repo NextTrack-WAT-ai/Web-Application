@@ -1,17 +1,17 @@
 package com.nexttrack.spring_boot_app.controller;
 
 import java.io.IOException;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nexttrack.spring_boot_app.Services.SpotifyService;
 
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 @RequestMapping("/api")
 @RestController
@@ -33,17 +33,14 @@ public class OAuthController {
     }
 
     @GetMapping("get-user-code")
-    public String getMethodName(@RequestParam("code") String userCode, HttpServletResponse response)
+    public void handleOAuthCallback(@RequestParam("code") String userCode, HttpServletResponse response)
             throws IOException {
-        String accessToken = spotifyService.getTokens(userCode);
+        String authKey = spotifyService.exchangeCodeForKey(userCode);
 
-        if (accessToken != null) {
-            response.sendRedirect(frontendUrl + "/landing/");
-            return accessToken;
+        if (authKey != null) {
+            response.sendRedirect(frontendUrl + "/landing?auth=" + authKey);
         } else {
             response.sendRedirect(frontendUrl + "/error/");
-            return null;
         }
     }
-
 }

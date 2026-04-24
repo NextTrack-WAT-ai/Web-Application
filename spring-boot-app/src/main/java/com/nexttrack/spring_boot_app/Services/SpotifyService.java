@@ -5,6 +5,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
+import com.nexttrack.spring_boot_app.auth.TokenStore;
 import com.nexttrack.spring_boot_app.configurations.SpotifyConfig;
 import com.nexttrack.spring_boot_app.responses.CreatePlaylistReponse;
 
@@ -18,221 +19,173 @@ import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.model_objects.specification.User;
-import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
-import se.michaelthelin.spotify.requests.data.personalization.simplified.GetUsersTopArtistsRequest;
-import se.michaelthelin.spotify.requests.data.playlists.AddItemsToPlaylistRequest;
-import se.michaelthelin.spotify.requests.data.playlists.CreatePlaylistRequest;
-import se.michaelthelin.spotify.requests.data.playlists.GetListOfCurrentUsersPlaylistsRequest;
-import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistsItemsRequest;
-import se.michaelthelin.spotify.requests.data.users_profile.GetCurrentUsersProfileRequest;
-import se.michaelthelin.spotify.requests.data.users_profile.GetUsersProfileRequest;
 
 import org.apache.hc.core5.http.ParseException;
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SpotifyService {
 
-    private URI redirectUri;
+    private static final Logger log = LoggerFactory.getLogger(SpotifyService.class);
 
-    private final SpotifyApi spotifyApi;
+    private final SpotifyConfig config;
+    private final URI redirectUri;
+    private final TokenStore tokenStore;
 
-    public SpotifyService(SpotifyConfig config) {
+    public SpotifyService(SpotifyConfig config, TokenStore tokenStore) {
+        this.config = config;
         this.redirectUri = URI.create(config.getApiUrl() + "/api/get-user-code");
-        this.spotifyApi = new SpotifyApi.Builder()
+        this.tokenStore = tokenStore;
+    }
+
+    private SpotifyApi buildBaseApi() {
+        return new SpotifyApi.Builder()
                 .setClientId(config.getClientId())
                 .setClientSecret(config.getClientSecret())
                 .setRedirectUri(redirectUri)
                 .build();
     }
 
-    // Generate the Spotify login URL
-    public String getSpotifyLoginUrl() {
-        AuthorizationCodeUriRequest authCodeUriRequest = spotifyApi.authorizationCodeUri()
-                .scope("user-read-private, user-read-email, user-top-read, playlist-read-private, playlist-read-collaborative, playlist-modify-private, playlist-modify-public")
-                .show_dialog(true)
+    /** Build a per-user SpotifyApi, refresh the access token, and update the store. */
+    private SpotifyApi apiForKey(String authKey) {
+        TokenStore.TokenPair pair = tokenStore.get(authKey)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown auth key"));
+
+        SpotifyApi api = new SpotifyApi.Builder()
+                .setClientId(config.getClientId())
+                .setClientSecret(config.getClientSecret())
+                .setRedirectUri(redirectUri)
+                .setAccessToken(pair.accessToken())
+                .setRefreshToken(pair.refreshToken())
                 .build();
 
-        URI uri = authCodeUriRequest.execute();
-        return uri.toString();
+        try {
+            AuthorizationCodeCredentials creds = api.authorizationCodeRefresh().build().execute();
+            String newAccess = creds.getAccessToken();
+            String newRefresh = creds.getRefreshToken();
+            api.setAccessToken(newAccess);
+            if (newRefresh != null) api.setRefreshToken(newRefresh);
+            tokenStore.updateTokens(authKey, newAccess, newRefresh);
+        } catch (Exception e) {
+            log.warn("Token refresh failed, proceeding with existing token: {}", e.getMessage());
+        }
+
+        return api;
     }
 
-    // Handle the authorization callback to retrieve the access and refresh tokens
-    public String getTokens(String code) {
-        AuthorizationCodeRequest authCodeRequest = spotifyApi.authorizationCode(code).build();
+    public String getSpotifyLoginUrl() {
+        AuthorizationCodeUriRequest req = buildBaseApi().authorizationCodeUri()
+                .scope("user-read-private, user-read-email, user-top-read, playlist-read-private, " +
+                        "playlist-read-collaborative, playlist-modify-private, playlist-modify-public")
+                .show_dialog(true)
+                .build();
+        return req.execute().toString();
+    }
 
+    /** Exchange the OAuth code for tokens. Returns the auth key to be sent to the client. */
+    public String exchangeCodeForKey(String code) {
+        SpotifyApi api = buildBaseApi();
+        AuthorizationCodeRequest req = api.authorizationCode(code).build();
         try {
-            AuthorizationCodeCredentials authCodeCredentials = authCodeRequest.execute();
-            spotifyApi.setAccessToken(authCodeCredentials.getAccessToken());
-            spotifyApi.setRefreshToken(authCodeCredentials.getRefreshToken());
-
-            System.out.println("Expires in: " + authCodeCredentials.getExpiresIn());
-            return spotifyApi.getAccessToken();
-        } catch (Exception exception) {
-            System.out.println("Error: " + exception.getMessage());
+            AuthorizationCodeCredentials creds = req.execute();
+            log.info("Tokens obtained, expires in {}s", creds.getExpiresIn());
+            return tokenStore.put(creds.getAccessToken(), creds.getRefreshToken());
+        } catch (Exception e) {
+            log.error("Error exchanging OAuth code: {}", e.getMessage());
             return null;
         }
     }
 
-    public void refreshAccessToken() {
+    public Artist[] getUserTopArtists(String authKey) {
         try {
-            AuthorizationCodeRefreshRequest refreshRequest = spotifyApi.authorizationCodeRefresh()
-                    .refresh_token(spotifyApi.getRefreshToken())
-                    .build();
-
-            AuthorizationCodeCredentials creds = refreshRequest.execute();
-            spotifyApi.setAccessToken(creds.getAccessToken());
-            if (creds.getRefreshToken() != null) {
-                spotifyApi.setRefreshToken(creds.getRefreshToken());
-            }
+            Paging<Artist> paging = apiForKey(authKey).getUsersTopArtists()
+                    .time_range("medium_term").limit(10).offset(5).build().execute();
+            return paging.getItems();
         } catch (Exception e) {
-            System.err.println("Error refreshing token: " + e.getMessage());
+            log.error("Error fetching top artists: {}", e.getMessage());
+            return new Artist[0];
         }
     }
 
-    public Artist[] getUserTopArtists() {
-        refreshAccessToken();
-        final GetUsersTopArtistsRequest getUsersTopArtistsRequest = spotifyApi.getUsersTopArtists()
-                .time_range("medium_term")
-                .limit(10)
-                .offset(5)
-                .build();
-
+    public PlaylistSimplified[] getAllPlaylists(String authKey) {
         try {
-            final Paging<Artist> artistPaging = getUsersTopArtistsRequest.execute();
-            return artistPaging.getItems();
-        } catch (Exception exception) {
-            System.out.println("Error: " + exception);
+            Paging<PlaylistSimplified> paging = apiForKey(authKey)
+                    .getListOfCurrentUsersPlaylists().build().execute();
+            return paging.getItems();
+        } catch (Exception e) {
+            log.error("Error fetching playlists: {}", e.getMessage());
+            return new PlaylistSimplified[0];
         }
-        return new Artist[0];
     }
 
-    public PlaylistSimplified[] getAllPlaylists() {
-        refreshAccessToken();
-        final GetListOfCurrentUsersPlaylistsRequest getListOfUsersPlaylistsRequest = spotifyApi
-                .getListOfCurrentUsersPlaylists()
-                .build();
-
+    public PlaylistTrack[] getSongsFromPlaylist(String authKey, String playlistId) {
         try {
-            final Paging<PlaylistSimplified> playlistsPaging = getListOfUsersPlaylistsRequest.execute();
-            return playlistsPaging.getItems();
-        } catch (Exception exception) {
-            System.out.println("Error: " + exception);
+            Paging<PlaylistTrack> paging = apiForKey(authKey)
+                    .getPlaylistsItems(playlistId).build().execute();
+            return paging.getItems();
+        } catch (Exception e) {
+            log.error("Error fetching playlist tracks: {}", e.getMessage());
+            return new PlaylistTrack[0];
         }
-        return new PlaylistSimplified[0];
     }
 
-    public PlaylistSimplified[] getRemixes(List<String> remixes) {
-        refreshAccessToken();
-        final GetListOfCurrentUsersPlaylistsRequest getListOfUsersPlaylistsRequest = spotifyApi
-                .getListOfCurrentUsersPlaylists()
-                .build();
-
-        try {
-            final Paging<PlaylistSimplified> playlistsPaging = getListOfUsersPlaylistsRequest.execute();
-            return playlistsPaging.getItems();
-        } catch (Exception exception) {
-            System.out.println("Error: " + exception);
-        }
-        return new PlaylistSimplified[0];
-    }
-
-    public PlaylistTrack[] getSongsFromPlaylist(String playlistId) {
-        refreshAccessToken();
-        final GetPlaylistsItemsRequest getPlaylistItemsRequest = spotifyApi.getPlaylistsItems(playlistId)
-                .build();
-
-        try {
-            final Paging<PlaylistTrack> tracksPaging = getPlaylistItemsRequest.execute();
-            return tracksPaging.getItems();
-        } catch (Exception exception) {
-            System.out.println("Error: " + exception);
-        }
-        return new PlaylistTrack[0];
-    }
-
-    public List<Track> getSeveralTracks(List<String> trackIds)
+    public List<Track> getSeveralTracks(String authKey, List<String> trackIds)
             throws IOException, SpotifyWebApiException, ParseException {
-        refreshAccessToken();
         String[] idsArray = trackIds.toArray(new String[0]);
-        return Arrays.asList(spotifyApi.getSeveralTracks(idsArray).build().execute());
+        return Arrays.asList(apiForKey(authKey).getSeveralTracks(idsArray).build().execute());
     }
 
-    public String getCurrentUsersId() {
-        refreshAccessToken();
+    public String getCurrentUsersId(String authKey) {
         try {
-            GetCurrentUsersProfileRequest getCurrentUsersProfileRequest = spotifyApi
-                    .getCurrentUsersProfile()
-                    .build();
-
-            User user = getCurrentUsersProfileRequest.execute();
+            User user = apiForKey(authKey).getCurrentUsersProfile().build().execute();
             return user.getId();
-
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
-            System.out.println("Error: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Error fetching user ID: {}", e.getMessage());
+            return null;
         }
-
-        return null;
     }
 
-    public String getCurrentUsersEmail() {
-        refreshAccessToken();
+    public String getCurrentUsersEmail(String authKey) {
         try {
-            GetCurrentUsersProfileRequest getCurrentUsersProfileRequest = spotifyApi
-                    .getCurrentUsersProfile()
-                    .build();
-            User user = getCurrentUsersProfileRequest.execute();
+            User user = apiForKey(authKey).getCurrentUsersProfile().build().execute();
             return user.getEmail();
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
-            System.out.println("Error: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Error fetching user email: {}", e.getMessage());
+            return null;
         }
-        return null;
     }
 
-    public User getUsersProfile_Sync() {
-        refreshAccessToken();
-        String userId = getCurrentUsersId();
-        GetUsersProfileRequest getUsersProfileRequest = spotifyApi.getUsersProfile(userId).build();
+    public User getUsersProfile(String authKey) {
         try {
-            final User user = getUsersProfileRequest.execute();
-
-            return user;
+            String userId = getCurrentUsersId(authKey);
+            if (userId == null) return null;
+            return apiForKey(authKey).getUsersProfile(userId).build().execute();
         } catch (IOException | SpotifyWebApiException | ParseException e) {
-            System.out.println("Error: " + e.getMessage());
+            log.error("Error fetching user profile: {}", e.getMessage());
+            return null;
         }
-        return null;
     }
 
-    public CreatePlaylistReponse createPlaylist_Sync(String userId) {
-        refreshAccessToken();
-        CreatePlaylistRequest createPlaylistRequest = spotifyApi
-                .createPlaylist(userId, "NextTrack Reshuffled Playlist")
-                .build();
-
+    public CreatePlaylistReponse createPlaylist(String authKey, String userId) {
         try {
-            final Playlist playlist = createPlaylistRequest.execute();
-
+            Playlist playlist = apiForKey(authKey)
+                    .createPlaylist(userId, "NextTrack Reshuffled Playlist").build().execute();
             return new CreatePlaylistReponse(playlist.getId(), playlist.getExternalUrls().get("spotify"));
         } catch (IOException | SpotifyWebApiException | ParseException e) {
-            System.out.println("Error: " + e.getMessage());
+            log.error("Error creating playlist: {}", e.getMessage());
+            return null;
         }
-        return null;
     }
 
-    public void addItemsToPlaylist_Sync(String playlistId, String[] uris) {
-        refreshAccessToken();
-        AddItemsToPlaylistRequest addItemsToPlaylistRequest = spotifyApi
-                .addItemsToPlaylist(playlistId, uris)
-                .position(0)
-                .build();
+    public void addItemsToPlaylist(String authKey, String playlistId, String[] uris) {
         try {
-            addItemsToPlaylistRequest.execute();
+            apiForKey(authKey).addItemsToPlaylist(playlistId, uris).position(0).build().execute();
         } catch (IOException | SpotifyWebApiException | ParseException e) {
-            System.out.println("Error: " + e.getMessage());
+            log.error("Error adding items to playlist: {}", e.getMessage());
         }
     }
-
 }

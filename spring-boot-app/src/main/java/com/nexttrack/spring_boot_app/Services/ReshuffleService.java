@@ -1,83 +1,69 @@
 package com.nexttrack.spring_boot_app.Services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexttrack.spring_boot_app.configurations.ExternalServicesConfig;
 import com.nexttrack.spring_boot_app.model.NextTrack;
 import com.nexttrack.spring_boot_app.model.PlaylistFeedback;
 import com.nexttrack.spring_boot_app.requests.FeedbackRequest;
 import com.nexttrack.spring_boot_app.requests.PlaylistReshuffleMLRequest;
 
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class ReshuffleService {
 
+    private static final Logger log = LoggerFactory.getLogger(ReshuffleService.class);
+    private static final Duration TIMEOUT = Duration.ofSeconds(60);
+
     private final WebClient webClient;
 
-    public ReshuffleService() {
+    public ReshuffleService(ExternalServicesConfig config) {
         this.webClient = WebClient.builder()
-                .baseUrl("https://recommendation-model-q48y.onrender.com")
+                .baseUrl(config.getReshuffleUrl())
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 
     public List<NextTrack> reshuffle(String email, Map<String, NextTrack> songInfoMap) {
         try {
-            List<NextTrack> songDetailsList = new ArrayList<>();
-
-            extractSongDetailsList(songInfoMap, songDetailsList);
-
-            PlaylistReshuffleMLRequest request = new PlaylistReshuffleMLRequest(email, songDetailsList);
-
-            // System.out.println("Sending payload: " + new
-            // ObjectMapper().writeValueAsString(request));
+            List<NextTrack> songs = new ArrayList<>(songInfoMap.values());
+            PlaylistReshuffleMLRequest request = new PlaylistReshuffleMLRequest(email, songs);
             return webClient.post()
                     .uri("/shuffle")
                     .bodyValue(request)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<NextTrack>>() {
-                    })
+                    .bodyToMono(new ParameterizedTypeReference<List<NextTrack>>() {})
+                    .timeout(TIMEOUT)
                     .block();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error calling reshuffle service: {}", e.getMessage());
             return null;
         }
     }
 
     public List<Map<String, String>> saveReshuffleFeedback(String email, List<PlaylistFeedback> feedbackTracks) {
         try {
-            // Create the payload object
             FeedbackRequest feedbackRequest = new FeedbackRequest(email, feedbackTracks);
-
-            // Log the payload being sent (for debugging purposes)
-            // System.out.println("Sending payload: " + new
-            // ObjectMapper().writeValueAsString(feedbackRequest));
-
-            // Send the POST request with the payload
             return webClient.post()
                     .uri("/feedback")
-                    .bodyValue(feedbackRequest) // Send the FeedbackRequest as the payload
+                    .bodyValue(feedbackRequest)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, String>>>() {
-                    })
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, String>>>() {})
+                    .timeout(TIMEOUT)
                     .block();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error saving reshuffle feedback: {}", e.getMessage());
             return null;
-        }
-    }
-
-    private void extractSongDetailsList(Map<String, NextTrack> songInfoMap, List<NextTrack> songDetailsList) {
-        for (NextTrack track : songInfoMap.values()) {
-            songDetailsList.add(track);
         }
     }
 }
